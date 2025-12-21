@@ -10,7 +10,7 @@
     <File Path="LICENSE" />
     <File Path="README.md" />
     <File Path="Smart.CommandLine.Hosting.props" />
-    <File Path="Smart.CommandLine.Hosting.sln.DotSettings" />
+    <File Path="Smart.CommandLine.sln.DotSettings" />
   </Folder>
   <Project Path="Develop/Develop.csproj" DefaultStartup="true" />
   <Project Path="Smart.CommandLine.Hosting/Smart.CommandLine.Hosting.csproj">
