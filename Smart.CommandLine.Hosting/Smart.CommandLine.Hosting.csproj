@@ -13,15 +13,15 @@
 
   <Target Name="PackBuildOutputs" DependsOnTargets="SatelliteDllsProjectOutputGroup;DebugSymbolsProjectOutputGroup">
     <ItemGroup>
-      <TfmSpecificPackageFile Include="..\BunnyTail.CommandHosting.props" PackagePath="build" />
-      <TfmSpecificPackageFile Include="..\BunnyTail.CommandHosting.Generator\bin\$(Configuration)\netstandard2.0\BunnyTail.CommandHosting.Generator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+      <TfmSpecificPackageFile Include="..\Smart.CommandLine.Hosting.props" PackagePath="build" />
+      <TfmSpecificPackageFile Include="..\Smart.CommandLine.Hosting.Generator\bin\$(Configuration)\netstandard2.0\Smart.CommandLine.Hosting.Generator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
       <TfmSpecificPackageFile Include="$(PKGSourceGenerateHelper)\lib\netstandard2.0\SourceGenerateHelper.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     </ItemGroup>
   </Target>
 
   <PropertyGroup>
-    <PackageId>BunnyTail.CommandHosting</PackageId>
-    <Title>BunnyTail.CommandHosting</Title>
+    <PackageId>Smart.CommandLine.Hosting</PackageId>
+    <Title>Smart.CommandLine.Hosting</Title>
     <Description>Template source generator.</Description>
     <PackageTags>sourcegenerator</PackageTags>
   </PropertyGroup>

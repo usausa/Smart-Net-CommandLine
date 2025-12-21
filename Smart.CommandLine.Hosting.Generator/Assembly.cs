@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: CLSCompliant(false)]
 
-[assembly: InternalsVisibleTo("BunnyTail.CommandHosting.Tests")]
+[assembly: InternalsVisibleTo("Smart.CommandLine.Hosting.Tests")]
 
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable CheckNamespace

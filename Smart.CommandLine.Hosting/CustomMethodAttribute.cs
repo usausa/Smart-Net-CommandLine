@@ -1,4 +1,4 @@
-namespace BunnyTail.CommandHosting;
+namespace Smart.CommandLine.Hosting;
 
 using System;
 

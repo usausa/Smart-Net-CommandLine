@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "BunnyTail.CommandHosting.Generator": {
+    "Smart.CommandLine.Hosting.Generator": {
       "commandName": "DebugRoslynComponent",
       "targetProject": "..\\Develop\\Develop.csproj"
     }

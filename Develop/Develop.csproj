@@ -12,15 +12,15 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
-  <Import Project="..\BunnyTail.CommandHosting.props" />
+  <Import Project="..\Smart.CommandLine.Hosting.props" />
 
   <PropertyGroup>
     <TemplateLibraryGeneratorValue>test</TemplateLibraryGeneratorValue>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BunnyTail.CommandHosting.Generator\BunnyTail.CommandHosting.Generator.csproj" OutputItemType="analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\BunnyTail.CommandHosting\BunnyTail.CommandHosting.csproj" />
+    <ProjectReference Include="..\Smart.CommandLine.Hosting.Generator\Smart.CommandLine.Hosting.Generator.csproj" OutputItemType="analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Smart.CommandLine.Hosting\Smart.CommandLine.Hosting.csproj" />
   </ItemGroup>
 
 </Project>

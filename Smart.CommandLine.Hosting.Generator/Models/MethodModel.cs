@@ -1,4 +1,4 @@
-namespace BunnyTail.CommandHosting.Generator.Models;
+namespace Smart.CommandLine.Hosting.Generator.Models;
 
 using Microsoft.CodeAnalysis;
 

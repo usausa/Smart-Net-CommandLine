@@ -1,10 +1,10 @@
-namespace BunnyTail.CommandHosting.Generator;
+namespace Smart.CommandLine.Hosting.Generator;
 
 using System;
 using System.Collections.Immutable;
 using System.Text;
 
-using BunnyTail.CommandHosting.Generator.Models;
+using Smart.CommandLine.Hosting.Generator.Models;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -16,7 +16,7 @@ using SourceGenerateHelper;
 [Generator]
 public sealed class TemplateGenerator : IIncrementalGenerator
 {
-    private const string AttributeName = "BunnyTail.CommandHosting.CustomMethodAttribute";
+    private const string AttributeName = "Smart.CommandLine.Hosting.CustomMethodAttribute";
 
     // ------------------------------------------------------------
     // Initialize

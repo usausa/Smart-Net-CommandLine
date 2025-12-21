@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <CodeAnalysisRuleSet>..\Analyzers.ruleset</CodeAnalysisRuleSet>
-    <RootNamespace>BunnyTail.CommandHosting</RootNamespace>
+    <RootNamespace>Smart.CommandLine.Hosting</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -25,7 +25,7 @@
     <TemplateLibraryGeneratorValue>test</TemplateLibraryGeneratorValue>
   </PropertyGroup>
 
-  <Import Project="..\BunnyTail.CommandHosting.props" />
+  <Import Project="..\Smart.CommandLine.Hosting.props" />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
@@ -34,8 +34,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BunnyTail.CommandHosting.Generator\BunnyTail.CommandHosting.Generator.csproj" OutputItemType="analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\BunnyTail.CommandHosting\BunnyTail.CommandHosting.csproj" />
+    <ProjectReference Include="..\Smart.CommandLine.Hosting.Generator\Smart.CommandLine.Hosting.Generator.csproj" OutputItemType="analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Smart.CommandLine.Hosting\Smart.CommandLine.Hosting.csproj" />
   </ItemGroup>
 
 </Project>

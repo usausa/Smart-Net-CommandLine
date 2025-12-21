@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="Analyzers.ruleset" />
+    <File Path="CodeCoverage.runsettings" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="Smart.CommandLine.Hosting.props" />
+    <File Path="Smart.CommandLine.Hosting.sln.DotSettings" />
+  </Folder>
+  <Project Path="Develop/Develop.csproj" DefaultStartup="true" />
+  <Project Path="Smart.CommandLine.Hosting/Smart.CommandLine.Hosting.csproj">
+    <BuildDependency Project="Smart.CommandLine.Hosting.Generator/Smart.CommandLine.Hosting.Generator.csproj" />
+  </Project>
+  <Project Path="Smart.CommandLine.Hosting.Generator/Smart.CommandLine.Hosting.Generator.csproj" />
+  <Project Path="Smart.CommandLine.Hosting.Tests/Smart.CommandLine.Hosting.Tests.csproj" />
+</Solution>

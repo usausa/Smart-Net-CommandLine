@@ -2,4 +2,4 @@ using System.Runtime.CompilerServices;
 
 [assembly: CLSCompliant(true)]
 
-[assembly: InternalsVisibleTo("BunnyTail.CommandHosting.Tests")]
+[assembly: InternalsVisibleTo("Smart.CommandLine.Hosting.Tests")]

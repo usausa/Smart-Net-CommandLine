@@ -1,6 +1,6 @@
 namespace Develop;
 
-using BunnyTail.CommandHosting;
+using Smart.CommandLine.Hosting;
 
 internal static class Program
 {
