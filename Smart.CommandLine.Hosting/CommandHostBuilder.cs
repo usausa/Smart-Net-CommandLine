@@ -350,12 +350,12 @@ internal sealed class RootCommandBuilder : IRootCommandBuilder
 
     internal RootCommand? GetRootCommand()
     {
-        if (rootCommand != null)
+        if (rootCommand is not null)
         {
             return rootCommand;
         }
 
-        if (name != null)
+        if (name is not null)
         {
             return new RootCommand(name);
         }
@@ -409,7 +409,7 @@ internal sealed class SubCommandBuilder : ISubCommandBuilder
 
         var descriptor = new CommandDescriptor(typeof(TCommand), builder);
 
-        if (configure != null)
+        if (configure is not null)
         {
             var subConfigurator = new SubCommandBuilder(services);
             configure(subConfigurator);

@@ -1,16 +1,11 @@
 namespace Smart.CommandLine.Hosting;
 
-internal static class OptionPosition
-{
-    public const int Auto = -1;
-}
-
 #pragma warning disable CA1711
 public interface IOptionAttribute
 {
-    int GetPosition();
-
     string GetName();
+
+    string[] GetAliases();
 
     string? GetDescription();
 
@@ -23,24 +18,24 @@ public interface IOptionAttribute
 [AttributeUsage(AttributeTargets.Property)]
 public abstract class BaseOptionAttribute : Attribute, IOptionAttribute
 {
-    public int Position { get; }
-
     public string Name { get; }
+
+    public string[] Aliases { get; }
 
     public string? Description { get; set; }
 
-    public bool IsRequired { get; set; } = true;
+    public bool IsRequired { get; set; }
 
-    protected BaseOptionAttribute(int position, string name)
+    protected BaseOptionAttribute(string name, string[] aliases)
     {
-        Position = position;
         Name = name;
+        Aliases = aliases;
     }
 
 #pragma warning disable CA1033
-    int IOptionAttribute.GetPosition() => Position;
-
     string IOptionAttribute.GetName() => Name;
+
+    string[] IOptionAttribute.GetAliases() => Aliases;
 
     string? IOptionAttribute.GetDescription() => Description;
 
@@ -54,13 +49,8 @@ public abstract class BaseOptionAttribute : Attribute, IOptionAttribute
 
 public sealed class OptionAttribute : BaseOptionAttribute
 {
-    public OptionAttribute(string name)
-        : base(OptionPosition.Auto, name)
-    {
-    }
-
-    public OptionAttribute(int position, string name)
-        : base(position, name)
+    public OptionAttribute(string name, params string[] aliases)
+        : base(name, aliases)
     {
     }
 
@@ -71,13 +61,8 @@ public sealed class OptionAttribute<T> : BaseOptionAttribute
 {
     public T? DefaultValue { get; set; }
 
-    public OptionAttribute(string name)
-        : base(OptionPosition.Auto, name)
-    {
-    }
-
-    public OptionAttribute(int position, string name)
-        : base(position, name)
+    public OptionAttribute(string name, params string[] aliases)
+        : base(name, aliases)
     {
     }
 

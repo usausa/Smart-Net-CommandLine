@@ -1,6 +1,7 @@
 namespace Smart.CommandLine.Hosting;
 
 using System.CommandLine;
+using System.ComponentModel;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +35,8 @@ public interface ICommandBuilder
     ICommandBuilder AddCommand<TCommand>(Action<ISubCommandBuilder>? configure = null)
         where TCommand : class;
 
+    // ReSharper disable once UnusedMemberInSuper.Global
+    [EditorBrowsable(EditorBrowsableState.Never)]
     ICommandBuilder AddCommand<TCommand>(
         Action<CommandActionBuilderContext>? builder,
         Action<ISubCommandBuilder>? configure = null)
@@ -62,6 +65,8 @@ public interface ISubCommandBuilder
         Action<ISubCommandBuilder>? configure = null)
         where TCommand : class;
 
+    // ReSharper disable once UnusedMemberInSuper.Global
+    [EditorBrowsable(EditorBrowsableState.Never)]
     ISubCommandBuilder AddSubCommand<TCommand>(
         Action<CommandActionBuilderContext>? builder,
         Action<ISubCommandBuilder>? configure = null)

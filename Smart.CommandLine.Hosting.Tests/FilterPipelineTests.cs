@@ -15,7 +15,7 @@ public sealed class FilterPipelineTests
 
         public object? GetService(Type serviceType)
         {
-            if (GetServiceFunc != null)
+            if (GetServiceFunc is not null)
             {
                 return GetServiceFunc(serviceType);
             }

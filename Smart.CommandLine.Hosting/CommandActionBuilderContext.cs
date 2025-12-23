@@ -19,8 +19,8 @@ public sealed class CommandActionBuilderContext
         ServiceProvider = serviceProvider;
     }
 
-    public void AddArgument(Argument argument)
+    public void AddOption(Option option)
     {
-        command.Arguments.Add(argument);
+        command.Options.Add(option);
     }
 }

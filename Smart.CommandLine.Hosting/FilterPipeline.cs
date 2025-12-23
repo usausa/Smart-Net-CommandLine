@@ -2,8 +2,6 @@ namespace Smart.CommandLine.Hosting;
 
 using System.Reflection;
 
-using Microsoft.Extensions.Options;
-
 internal sealed class FilterPipeline
 {
     private readonly IServiceProvider serviceProvider;
