@@ -1,4 +1,4 @@
-# Smart.Console - System.CommandLine hosting
+# Smart.CommandLine - System.CommandLine hosting
 
 [![NuGet](https://img.shields.io/nuget/v/Usa.Smart.CommandLine.Hosting.svg)](https://www.nuget.org/packages/Usa.Smart.CommandLine.Hosting/)
 
