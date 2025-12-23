@@ -20,7 +20,7 @@
   </Target>
 
   <PropertyGroup>
-    <PackageId>Smart.CommandLine.Hosting</PackageId>
+    <PackageId>Usa.Smart.CommandLine.Hosting</PackageId>
     <Title>Smart.CommandLine.Hosting</Title>
     <Description>Command hosting.</Description>
     <PackageTags>command cli console hosting</PackageTags>
