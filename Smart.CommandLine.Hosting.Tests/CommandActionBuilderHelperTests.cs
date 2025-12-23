@@ -1,3 +1,6 @@
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
+// ReSharper disable UnusedAutoPropertyAccessor.Local
+// ReSharper disable UnusedMember.Local
 namespace Smart.CommandLine.Hosting;
 
 using System.CommandLine;
@@ -296,7 +299,13 @@ public sealed class CommandActionBuilderHelperTests
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
 
-        // Assert
+        // Assert - Verify ParseResult contains the values
+        var nameOption = (Option<string>)command.Options.First(o => o.Name == "--name");
+        var valueOption = (Option<int>)command.Options.First(o => o.Name == "--value");
+        Assert.Equal("TestName", parseResult.GetValue(nameOption));
+        Assert.Equal(42, parseResult.GetValue(valueOption));
+
+        // Assert - Verify properties are set correctly
         Assert.Equal("TestName", commandInstance.Name);
         Assert.Equal(42, commandInstance.Value);
         Assert.True(commandInstance.Executed);
@@ -322,14 +331,15 @@ public sealed class CommandActionBuilderHelperTests
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
 
-        // Assert
+        // Assert - Verify ParseResult has default values
         var countOption = (Option<int>)command.Options.First(o => o.Name == "--count");
         var nameOption = (Option<string>)command.Options.First(o => o.Name == "--name");
-        var countValue = parseResult.GetValue(countOption);
-        var nameValue = parseResult.GetValue(nameOption);
+        Assert.Equal(10, parseResult.GetValue(countOption));
+        Assert.Equal("default", parseResult.GetValue(nameOption));
 
-        Assert.Equal(10, countValue);
-        Assert.Equal("default", nameValue);
+        // Assert - Verify properties are set with defaults
+        Assert.Equal(10, commandInstance.Count);
+        Assert.Equal("default", commandInstance.Name);
     }
 
     [Fact]
@@ -352,14 +362,15 @@ public sealed class CommandActionBuilderHelperTests
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
 
-        // Assert
+        // Assert - Verify ParseResult has provided and default values
         var countOption = (Option<int>)command.Options.First(o => o.Name == "--count");
         var nameOption = (Option<string>)command.Options.First(o => o.Name == "--name");
-        var countValue = parseResult.GetValue(countOption);
-        var nameValue = parseResult.GetValue(nameOption);
+        Assert.Equal(20, parseResult.GetValue(countOption));
+        Assert.Equal("default", parseResult.GetValue(nameOption));
 
-        Assert.Equal(20, countValue);
-        Assert.Equal("default", nameValue);
+        // Assert - Verify properties are set correctly
+        Assert.Equal(20, commandInstance.Count);
+        Assert.Equal("default", commandInstance.Name);
     }
 
     [Fact]
@@ -382,7 +393,11 @@ public sealed class CommandActionBuilderHelperTests
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
 
-        // Assert
+        // Assert - Verify ParseResult has the value
+        var nameOption = (Option<string>)command.Options.First(o => o.Name == "--name");
+        Assert.Equal("ShortName", parseResult.GetValue(nameOption));
+
+        // Assert - Verify property is set via alias
         Assert.Equal("ShortName", commandInstance.Name);
     }
 
@@ -406,7 +421,11 @@ public sealed class CommandActionBuilderHelperTests
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
 
-        // Assert
+        // Assert - Verify ParseResult has the boolean value
+        var verboseOption = (Option<bool>)command.Options.First(o => o.Name == "--verbose");
+        Assert.True(parseResult.GetValue(verboseOption));
+
+        // Assert - Verify boolean property is set
         Assert.True(commandInstance.Verbose);
     }
 
@@ -461,26 +480,92 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_ReturnsCompletedTask()
+    public async Task CreateReflectionBasedDelegate_Operation_WithMultipleOptions_SetsAllProperties()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
-        var context = new CommandActionBuilderContext(typeof(CommandWithoutOptions), command, serviceProvider);
+        var context = new CommandActionBuilderContext(typeof(CommandWithMultipleOptions), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithoutOptions));
+        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithMultipleOptions));
         builderDelegate(context);
 
-        var commandInstance = new CommandWithoutOptions();
+        var commandInstance = new CommandWithMultipleOptions();
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
-        var parseResult = rootCommand.Parse(string.Empty);
-        var commandContext = new CommandContext(typeof(CommandWithoutOptions), commandInstance, CancellationToken.None);
+        var parseResult = rootCommand.Parse("test --name John --age 30 --active");
+        var commandContext = new CommandContext(typeof(CommandWithMultipleOptions), commandInstance, CancellationToken.None);
 
         // Act
-        var result = context.Operation!(commandInstance, parseResult, commandContext);
+        await context.Operation!(commandInstance, parseResult, commandContext);
 
-        // Assert
-        await result;
+        // Assert - Verify ParseResult has all values
+        var nameOption = (Option<string>)command.Options.First(o => o.Name == "--name");
+        var ageOption = (Option<int>)command.Options.First(o => o.Name == "--age");
+        var activeOption = (Option<bool>)command.Options.First(o => o.Name == "--active");
+        Assert.Equal("John", parseResult.GetValue(nameOption));
+        Assert.Equal(30, parseResult.GetValue(ageOption));
+        Assert.True(parseResult.GetValue(activeOption));
+
+        // Assert - Verify all properties are set
+        Assert.Equal("John", commandInstance.Name);
+        Assert.Equal(30, commandInstance.Age);
+        Assert.True(commandInstance.Active);
+    }
+
+    [Fact]
+    public async Task CreateReflectionBasedDelegate_Operation_WithNullableType_SetsValue()
+    {
+        // Arrange
+        var serviceProvider = new TestServiceProvider();
+        var command = new Command("test");
+        var context = new CommandActionBuilderContext(typeof(CommandWithNullableType), command, serviceProvider);
+
+        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithNullableType));
+        builderDelegate(context);
+
+        var commandInstance = new CommandWithNullableType();
+        var rootCommand = new RootCommand();
+        rootCommand.Subcommands.Add(command);
+        var parseResult = rootCommand.Parse("test --value 100");
+        var commandContext = new CommandContext(typeof(CommandWithNullableType), commandInstance, CancellationToken.None);
+
+        // Act
+        await context.Operation!(commandInstance, parseResult, commandContext);
+
+        // Assert - Verify ParseResult has the nullable value
+        var valueOption = (Option<int?>)command.Options.First(o => o.Name == "--value");
+        Assert.Equal(100, parseResult.GetValue(valueOption));
+
+        // Assert - Verify nullable property is set
+        Assert.Equal(100, commandInstance.Value);
+    }
+
+    [Fact]
+    public async Task CreateReflectionBasedDelegate_Operation_WithNullableType_WithoutValue_SetsNull()
+    {
+        // Arrange
+        var serviceProvider = new TestServiceProvider();
+        var command = new Command("test");
+        var context = new CommandActionBuilderContext(typeof(CommandWithNullableType), command, serviceProvider);
+
+        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithNullableType));
+        builderDelegate(context);
+
+        var commandInstance = new CommandWithNullableType();
+        var rootCommand = new RootCommand();
+        rootCommand.Subcommands.Add(command);
+        var parseResult = rootCommand.Parse("test");
+        var commandContext = new CommandContext(typeof(CommandWithNullableType), commandInstance, CancellationToken.None);
+
+        // Act
+        await context.Operation!(commandInstance, parseResult, commandContext);
+
+        // Assert - Verify ParseResult has null for nullable value
+        var valueOption = (Option<int?>)command.Options.First(o => o.Name == "--value");
+        Assert.Null(parseResult.GetValue(valueOption));
+
+        // Assert - Verify nullable property remains null
+        Assert.Null(commandInstance.Value);
     }
 }
