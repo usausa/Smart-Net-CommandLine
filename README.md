@@ -26,6 +26,7 @@ var builder = CommandHost.CreateBuilder(args)
 // Logging
 builder.Services.AddLogging(logging =>
 {
+    logging.ClearProviders();
     logging.AddSimpleConsole(options =>
     {
         options.SingleLine = true;
