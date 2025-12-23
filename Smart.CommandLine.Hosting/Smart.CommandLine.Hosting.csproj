@@ -22,8 +22,8 @@
   <PropertyGroup>
     <PackageId>Smart.CommandLine.Hosting</PackageId>
     <Title>Smart.CommandLine.Hosting</Title>
-    <Description>Template source generator.</Description>
-    <PackageTags>sourcegenerator</PackageTags>
+    <Description>Command hosting.</Description>
+    <PackageTags>command cli console hosting</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
