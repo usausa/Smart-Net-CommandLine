@@ -37,7 +37,7 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
 
     public ILoggingBuilder Logging => loggingBuilder;
 
-    public CommandHostBuilder(string[] args, bool useDefaults = true)
+    public CommandHostBuilder(string[] args)
     {
         this.args = args;
 
@@ -63,20 +63,6 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
 
         // Logging
         loggingBuilder = new LoggingBuilder(services);
-
-        // Default setting
-        if (useDefaults)
-        {
-            this.UseDefaultConfiguration();
-            this.UseDefaultLogging();
-        }
-        else
-        {
-            services.AddLogging(builder =>
-            {
-                builder.AddConsole();
-            });
-        }
 
         // Add basic services
         services.AddSingleton<IConfiguration>(configuration);

@@ -105,7 +105,7 @@ public sealed class CommandActionBuilderHelperTests
 #pragma warning restore CA1812
 
     //--------------------------------------------------------------------------------
-    // CreateReflectionBasedDelegate
+    // Test
     //--------------------------------------------------------------------------------
 
     [Fact]
@@ -142,7 +142,6 @@ public sealed class CommandActionBuilderHelperTests
         // Assert
         var nameOption = command.Options.FirstOrDefault(o => o.Name == "--name");
         var valueOption = command.Options.FirstOrDefault(o => o.Name == "--value");
-
         Assert.NotNull(nameOption);
         Assert.NotNull(valueOption);
     }

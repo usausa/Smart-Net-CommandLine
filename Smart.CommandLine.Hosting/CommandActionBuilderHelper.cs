@@ -40,6 +40,8 @@ internal static class CommandActionBuilderHelper
                     descriptionProperty?.SetValue(option, description);
                 }
 
+                option.Required = attribute.GetIsRequired();
+
                 // Set default value factory
                 var defaultValue = GetDefaultValue(property, attribute);
                 if (defaultValue.HasValue)

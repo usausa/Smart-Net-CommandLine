@@ -1,3 +1,4 @@
+// ReSharper disable MemberCanBePrivate.Local
 namespace Smart.CommandLine.Hosting;
 
 public sealed class FilterPipelineTests
@@ -37,12 +38,9 @@ public sealed class FilterPipelineTests
     {
         private readonly int exitCode;
 
-        public int Order { get; }
-
-        public ExitCodeFilter(int exitCode, int order = 0)
+        public ExitCodeFilter(int exitCode)
         {
             this.exitCode = exitCode;
-            Order = order;
         }
 
         public async ValueTask ExecuteAsync(CommandContext context, CommandDelegate next)
@@ -54,8 +52,6 @@ public sealed class FilterPipelineTests
 
     private sealed class ShortCircuitFilter : ICommandFilter
     {
-        public int Order => 0;
-
         public ValueTask ExecuteAsync(CommandContext context, CommandDelegate next)
         {
             context.Items["short-circuit"] = true;
@@ -88,8 +84,6 @@ public sealed class FilterPipelineTests
     {
         private readonly List<string> log;
 
-        public int Order => 0;
-
         public GlobalFilter1(List<string> log)
         {
             this.log = log;
@@ -106,8 +100,6 @@ public sealed class FilterPipelineTests
     private sealed class GlobalFilter2 : ICommandFilter
     {
         private readonly List<string> log;
-
-        public int Order => 0;
 
         public GlobalFilter2(List<string> log)
         {
