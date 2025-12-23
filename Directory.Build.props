@@ -18,7 +18,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Authors>machi_pon</Authors>
-    <Copyright>Copyright (c) 2024 machi_pon</Copyright>
+    <Copyright>Copyright (c) 2025 machi_pon</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/usausa/template-library-with-generator</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
