@@ -57,6 +57,14 @@ public interface IRootCommandBuilder
     IRootCommandBuilder UseRootCommand(RootCommand rootCommand);
 
     IRootCommandBuilder Configure(Action<RootCommand> configure);
+
+    IRootCommandBuilder UseHandler<THandler>()
+        where THandler : class, ICommandHandler;
+
+    // ReSharper disable once UnusedMemberInSuper.Global
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    IRootCommandBuilder UseHandler<THandler>(Action<CommandActionBuilderContext>? builder)
+        where THandler : class, ICommandHandler;
 }
 
 public interface ISubCommandBuilder

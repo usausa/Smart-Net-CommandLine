@@ -95,6 +95,7 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         commandConfiguration?.Invoke(commandBuilder);
 
         var commandDescriptors = commandBuilder.GetCommandDescriptors();
+        var rootDescriptor = commandBuilder.GetRootHandlerDescriptor();
 
         // Setup filters
         var filterTypes = new HashSet<Type>();
@@ -105,6 +106,14 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
             foreach (var filterDescriptor in globalFilters.Descriptors)
             {
                 filterTypes.Add(filterDescriptor.FilterType);
+            }
+        }
+
+        if (rootDescriptor is not null)
+        {
+            foreach (var attribute in rootDescriptor.CommandType.GetCustomAttributes<FilterAttribute>())
+            {
+                filterTypes.Add(attribute.FilterType);
             }
         }
 
@@ -131,7 +140,12 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         var rootCommandConfiguration = commandBuilder.GetRootCommandConfiguration();
         rootCommandConfiguration?.Invoke(rootCommand);
 
-        // Add commands
+        // Add command handlers
+        if (rootDescriptor is not null)
+        {
+            SetupCommandHandler(serviceProvider, globalFilters, rootCommand, rootDescriptor);
+        }
+
         foreach (var descriptor in commandDescriptors)
         {
             var command = CreateCommand(serviceProvider, globalFilters, descriptor);
@@ -150,30 +164,7 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         // Build executable command
         if (typeof(ICommandHandler).IsAssignableFrom(descriptor.CommandType))
         {
-            // Build command
-            var actionBuilder = descriptor.ActionBuilder ?? CommandActionBuilderHelper.CreateReflectionBasedDelegate(descriptor.CommandType);
-            var builderContext = new CommandActionBuilderContext(descriptor.CommandType, command, serviceProvider);
-
-            actionBuilder(builderContext);
-
-            var operation = builderContext.Operation;
-            if (operation is null)
-            {
-                throw new InvalidOperationException("Operation is not set.");
-            }
-
-            // Set action
-            var filterPipeline = new FilterPipeline(serviceProvider, globalFilters);
-
-            command.SetAction(async (parseResult, token) =>
-            {
-                var handler = (ICommandHandler)ActivatorUtilities.CreateInstance(serviceProvider, descriptor.CommandType);
-                var commandContext = new CommandContext(descriptor.CommandType, handler, token);
-
-                await filterPipeline.ExecuteAsync(commandContext, ctx => operation(handler, parseResult, ctx)).ConfigureAwait(false);
-
-                return commandContext.ExitCode;
-            });
+            SetupCommandHandler(serviceProvider, globalFilters, command, descriptor);
         }
 
         // Add sub commands
@@ -184,6 +175,34 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         }
 
         return command;
+    }
+
+    private static void SetupCommandHandler(IServiceProvider serviceProvider, FilterCollection globalFilters, Command command, CommandDescriptor descriptor)
+    {
+        // Build command
+        var actionBuilder = descriptor.ActionBuilder ?? CommandActionBuilderHelper.CreateReflectionBasedDelegate(descriptor.CommandType);
+        var builderContext = new CommandActionBuilderContext(descriptor.CommandType, command, serviceProvider);
+
+        actionBuilder(builderContext);
+
+        var operation = builderContext.Operation;
+        if (operation is null)
+        {
+            throw new InvalidOperationException("Operation is not set.");
+        }
+
+        // Set action
+        var filterPipeline = new FilterPipeline(serviceProvider, globalFilters);
+
+        command.SetAction(async (parseResult, token) =>
+        {
+            var handler = (ICommandHandler)ActivatorUtilities.CreateInstance(serviceProvider, descriptor.CommandType);
+            var commandContext = new CommandContext(descriptor.CommandType, handler, token);
+
+            await filterPipeline.ExecuteAsync(commandContext, ctx => operation(handler, parseResult, ctx)).ConfigureAwait(false);
+
+            return commandContext.ExitCode;
+        });
     }
 }
 #pragma warning restore CA1001
@@ -225,6 +244,8 @@ internal sealed class CommandBuilder : ICommandBuilder
 
     private Action<RootCommand>? rootCommandConfiguration;
 
+    private CommandDescriptor? rootDescriptor;
+
     private readonly List<CommandDescriptor> commandDescriptors = new();
 
     private readonly FilterCollection globalFilters = new();
@@ -236,11 +257,12 @@ internal sealed class CommandBuilder : ICommandBuilder
 
     public ICommandBuilder ConfigureRootCommand(Action<IRootCommandBuilder> configure)
     {
-        var rootConfigurator = new RootCommandBuilder();
+        var rootConfigurator = new RootCommandBuilder(services);
         configure(rootConfigurator);
 
         rootCommand = rootConfigurator.GetRootCommand();
         rootCommandConfiguration = rootConfigurator.GetConfiguration();
+        rootDescriptor = rootConfigurator.GetRootHandlerDescriptor();
 
         return this;
     }
@@ -291,6 +313,8 @@ internal sealed class CommandBuilder : ICommandBuilder
 
     internal Action<RootCommand>? GetRootCommandConfiguration() => rootCommandConfiguration;
 
+    internal CommandDescriptor? GetRootHandlerDescriptor() => rootDescriptor;
+
     internal List<CommandDescriptor> GetCommandDescriptors() => commandDescriptors;
 
     internal FilterCollection GetGlobalFilters() => globalFilters;
@@ -298,6 +322,8 @@ internal sealed class CommandBuilder : ICommandBuilder
 
 internal sealed class RootCommandBuilder : IRootCommandBuilder
 {
+    private readonly IServiceCollection services;
+
     private string? name;
 
     private string? description;
@@ -305,6 +331,13 @@ internal sealed class RootCommandBuilder : IRootCommandBuilder
     private RootCommand? rootCommand;
 
     private Action<RootCommand>? configure;
+
+    private CommandDescriptor? rootDescriptor;
+
+    public RootCommandBuilder(IServiceCollection services)
+    {
+        this.services = services;
+    }
 
     // ReSharper disable once ParameterHidesMember
     public IRootCommandBuilder WithName(string name)
@@ -331,6 +364,20 @@ internal sealed class RootCommandBuilder : IRootCommandBuilder
     public IRootCommandBuilder Configure(Action<RootCommand> configure)
     {
         this.configure = configure;
+        return this;
+    }
+
+    public IRootCommandBuilder UseHandler<THandler>()
+        where THandler : class, ICommandHandler
+    {
+        return UseHandler<THandler>(null);
+    }
+
+    public IRootCommandBuilder UseHandler<THandler>(Action<CommandActionBuilderContext>? builder)
+        where THandler : class, ICommandHandler
+    {
+        services.AddTransient<THandler>();
+        rootDescriptor = new CommandDescriptor(typeof(THandler), builder);
         return this;
     }
 
@@ -366,6 +413,8 @@ internal sealed class RootCommandBuilder : IRootCommandBuilder
             configure?.Invoke(command);
         };
     }
+
+    internal CommandDescriptor? GetRootHandlerDescriptor() => rootDescriptor;
 }
 
 internal sealed class SubCommandBuilder : ISubCommandBuilder
