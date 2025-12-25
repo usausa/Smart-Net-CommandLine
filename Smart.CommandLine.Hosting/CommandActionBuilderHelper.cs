@@ -20,14 +20,8 @@ internal static class CommandActionBuilderHelper
             var propertyArguments = new List<(PropertyInfo, Option)>();
 
             // Add option
-            foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            foreach (var (property, attribute) in EnumerableTargetProperties(type))
             {
-                // Get option attribute
-                if (property.GetCustomAttribute<BaseOptionAttribute>() is not IOptionAttribute attribute)
-                {
-                    continue;
-                }
-
                 // Create option
                 var optionType = typeof(Option<>).MakeGenericType(property.PropertyType);
                 var option = (Option)Activator.CreateInstance(optionType, attribute.GetName(), attribute.GetAliases())!;
@@ -75,6 +69,48 @@ internal static class CommandActionBuilderHelper
                 return command.ExecuteAsync(commandContext);
             };
         };
+    }
+
+    private static IEnumerable<(PropertyInfo Property, IOptionAttribute Attribute)> EnumerableTargetProperties(Type type)
+    {
+        var propertiesWithMetadata = new List<(PropertyInfo Property, IOptionAttribute Attribute, int TypeLevel, int Order, int PropertyIndex)>();
+
+        var currentType = type;
+        var currentLevel = 0;
+        while ((currentType is not null) && (currentType != typeof(object)))
+        {
+            var properties = currentType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            for (var i = 0; i < properties.Length; i++)
+            {
+                var property = properties[i];
+                if (property.GetCustomAttribute<BaseOptionAttribute>() is IOptionAttribute attribute)
+                {
+                    propertiesWithMetadata.Add((property, attribute, currentLevel, attribute.GetOrder(), i));
+                }
+            }
+
+            currentType = currentType.BaseType;
+            currentLevel--;
+        }
+
+        propertiesWithMetadata.Sort(static (x, y) =>
+        {
+            var orderComparison = x.Order.CompareTo(y.Order);
+            if (orderComparison != 0)
+            {
+                return orderComparison;
+            }
+
+            var levelComparison = x.TypeLevel.CompareTo(y.TypeLevel);
+            if (levelComparison != 0)
+            {
+                return levelComparison;
+            }
+
+            return x.PropertyIndex.CompareTo(y.PropertyIndex);
+        });
+
+        return propertiesWithMetadata.Select(static x => (x.Property, x.Attribute));
     }
 
     private static (bool HasValue, object? Value) GetDefaultValue(PropertyInfo property, IOptionAttribute attribute)

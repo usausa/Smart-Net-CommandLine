@@ -7,6 +7,8 @@ public interface IOptionAttribute
 
     string[] GetAliases();
 
+    int GetOrder();
+
     string? GetDescription();
 
     bool GetRequired();
@@ -24,6 +26,8 @@ public abstract class BaseOptionAttribute : Attribute, IOptionAttribute
 
     public string[] Aliases { get; }
 
+    public int Order { get; set; }
+
     public string? Description { get; set; }
 
     public bool Required { get; set; }
@@ -38,6 +42,8 @@ public abstract class BaseOptionAttribute : Attribute, IOptionAttribute
     string IOptionAttribute.GetName() => Name;
 
     string[] IOptionAttribute.GetAliases() => Aliases;
+
+    int IOptionAttribute.GetOrder() => Order;
 
     string? IOptionAttribute.GetDescription() => Description;
 
