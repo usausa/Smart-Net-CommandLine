@@ -123,7 +123,7 @@ public sealed class MessageCommand : ICommandHandler
         this.log = log;
     }
 
-    [Option<string>("--text", "-t", Description = "Text to show", IsRequired = true)]
+    [Option<string>("--text", "-t", Description = "Text to show", Required = true)]
     public string Text { get; set; } = default!;
 
     public ValueTask ExecuteAsync(CommandContext context)
@@ -143,13 +143,13 @@ public sealed class GreetCommand : ICommandHandler
         this.greetService = greetService;
     }
 
-    [Option<string>("--name", "-n", Description = "Name to greet", IsRequired = true)]
+    [Option<string>("--name", "-n", Description = "Name to greet", Required = true)]
     public string Name { get; set; } = default!;
 
-    [Option<string>("--greeting", "-g", Description = "Greeting message", IsRequired = false, DefaultValue = "Hello")]
+    [Option<string>("--greeting", "-g", Description = "Greeting message", Required = false, DefaultValue = "Hello")]
     public string Greeting { get; set; } = default!;
 
-    [Option<int>("--count", "-c", Description = "Number of times to greet", IsRequired = false, DefaultValue = 1)]
+    [Option<int>("--count", "-c", Description = "Number of times to greet", Required = false, DefaultValue = 1)]
     public int Count { get; set; }
 
     public ValueTask ExecuteAsync(CommandContext context)
@@ -173,7 +173,7 @@ public sealed class FilterCommand : ICommandHandler
         this.log = log;
     }
 
-    [Option<string>("--message", "-m", Description = "Message to display", IsRequired = true)]
+    [Option<string>("--message", "-m", Description = "Message to display", Required = true)]
     public string Message { get; set; } = default!;
 
     public async ValueTask ExecuteAsync(CommandContext context)
@@ -238,10 +238,10 @@ public sealed class UserAddCommand : ICommandHandler
         this.log = log;
     }
 
-    [Option<string>("--user", "-u", Description = "Username to add", IsRequired = true)]
+    [Option<string>("--user", "-u", Description = "Username to add", Required = true)]
     public string Username { get; set; } = default!;
 
-    [Option<string>("--email", "-e", Description = "User email address", IsRequired = true)]
+    [Option<string>("--email", "-e", Description = "User email address", Required = true)]
     public string Email { get; set; } = default!;
 
     public ValueTask ExecuteAsync(CommandContext context)
@@ -258,10 +258,10 @@ public sealed class UserRoleCommand
 
 public abstract class UserRoleCommandBase : ICommandHandler
 {
-    [Option<string>("--user", "-u", Description = "Username to add", IsRequired = true)]
+    [Option<string>("--user", "-u", Description = "Username to add", Required = true)]
     public string Username { get; set; } = default!;
 
-    [Option<string>("--role", "-r", Description = "Username to add", IsRequired = true)]
+    [Option<string>("--role", "-r", Description = "Username to add", Required = true)]
     public string Role { get; set; } = default!;
 
     public abstract ValueTask ExecuteAsync(CommandContext context);

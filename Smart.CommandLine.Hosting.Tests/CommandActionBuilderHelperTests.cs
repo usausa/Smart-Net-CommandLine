@@ -27,7 +27,7 @@ public sealed class CommandActionBuilderHelperTests
 #pragma warning disable CA1812
     private sealed class CommandWithRequired : ICommandHandler
     {
-        [Option("--required", IsRequired = true)]
+        [Option("--required", Required = true)]
         public string Required { get; set; } = default!;
 
         public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
@@ -80,6 +80,30 @@ public sealed class CommandActionBuilderHelperTests
     {
         [Option("--value")]
         public int? Value { get; set; }
+
+        public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+    }
+
+    private sealed class CommandWithCompletions : ICommandHandler
+    {
+        [Option("--format", "-f", Completions = new[] { "json", "xml", "yaml" })]
+        public string Format { get; set; } = default!;
+
+        public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+    }
+
+    private sealed class CommandWithGenericCompletions : ICommandHandler
+    {
+        [Option<string>("--level", "-l", Completions = new[] { "debug", "info", "warning", "error" })]
+        public string Level { get; set; } = default!;
+
+        public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+    }
+
+    private sealed class CommandWithIntCompletions : ICommandHandler
+    {
+        [Option<int>("--port", "-p", Completions = new[] { 80, 443, 8080, 8443 })]
+        public int Port { get; set; }
 
         public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
     }
@@ -535,8 +559,6 @@ public sealed class CommandActionBuilderHelperTests
         // Assert - Verify ParseResult has the nullable value
         var valueOption = (Option<int?>)command.Options.First(o => o.Name == "--value");
         Assert.Equal(100, parseResult.GetValue(valueOption));
-
-        // Assert - Verify nullable property is set
         Assert.Equal(100, commandInstance.Value);
     }
 
@@ -566,5 +588,166 @@ public sealed class CommandActionBuilderHelperTests
 
         // Assert - Verify nullable property remains null
         Assert.Null(commandInstance.Value);
+    }
+
+    [Fact]
+    public void CreateReflectionBasedDelegate_WithCompletions_AddsOption()
+    {
+        // Arrange
+        var serviceProvider = new TestServiceProvider();
+        var command = new Command("test");
+        var context = new CommandActionBuilderContext(typeof(CommandWithCompletions), command, serviceProvider);
+
+        // Act
+        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithCompletions));
+        builderDelegate(context);
+
+        // Assert
+        Assert.Single(command.Options);
+        var formatOption = command.Options.FirstOrDefault(o => o.Name == "--format");
+        Assert.NotNull(formatOption);
+        Assert.Contains(formatOption.Aliases, x => x == "-f");
+    }
+
+    [Fact]
+    public async Task CreateReflectionBasedDelegate_Operation_WithCompletions_AcceptsAnyValue()
+    {
+        // Arrange
+        var serviceProvider = new TestServiceProvider();
+        var command = new Command("test");
+        var context = new CommandActionBuilderContext(typeof(CommandWithCompletions), command, serviceProvider);
+
+        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithCompletions));
+        builderDelegate(context);
+
+        var commandInstance = new CommandWithCompletions();
+        var rootCommand = new RootCommand();
+        rootCommand.Subcommands.Add(command);
+        var parseResult = rootCommand.Parse("test --format json");
+        var commandContext = new CommandContext(typeof(CommandWithCompletions), commandInstance, CancellationToken.None);
+
+        // Act
+        await context.Operation!(commandInstance, parseResult, commandContext);
+
+        // Assert
+        var formatOption = (Option<string>)command.Options.First(o => o.Name == "--format");
+        Assert.Equal("json", parseResult.GetValue(formatOption));
+        Assert.Equal("json", commandInstance.Format);
+    }
+
+    [Fact]
+    public void CreateReflectionBasedDelegate_WithGenericCompletions_AddsOption()
+    {
+        // Arrange
+        var serviceProvider = new TestServiceProvider();
+        var command = new Command("test");
+        var context = new CommandActionBuilderContext(typeof(CommandWithGenericCompletions), command, serviceProvider);
+
+        // Act
+        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithGenericCompletions));
+        builderDelegate(context);
+
+        // Assert
+        Assert.Single(command.Options);
+        var levelOption = command.Options.FirstOrDefault(o => o.Name == "--level");
+        Assert.NotNull(levelOption);
+        Assert.Contains(levelOption.Aliases, x => x == "-l");
+    }
+
+    [Fact]
+    public async Task CreateReflectionBasedDelegate_Operation_WithGenericCompletions_SetsValue()
+    {
+        // Arrange
+        var serviceProvider = new TestServiceProvider();
+        var command = new Command("test");
+        var context = new CommandActionBuilderContext(typeof(CommandWithGenericCompletions), command, serviceProvider);
+
+        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithGenericCompletions));
+        builderDelegate(context);
+
+        var commandInstance = new CommandWithGenericCompletions();
+        var rootCommand = new RootCommand();
+        rootCommand.Subcommands.Add(command);
+        var parseResult = rootCommand.Parse("test --level warning");
+        var commandContext = new CommandContext(typeof(CommandWithGenericCompletions), commandInstance, CancellationToken.None);
+
+        // Act
+        await context.Operation!(commandInstance, parseResult, commandContext);
+
+        // Assert
+        var levelOption = (Option<string>)command.Options.First(o => o.Name == "--level");
+        Assert.Equal("warning", parseResult.GetValue(levelOption));
+        Assert.Equal("warning", commandInstance.Level);
+    }
+
+    [Fact]
+    public void CreateReflectionBasedDelegate_WithIntCompletions_AddsOption()
+    {
+        // Arrange
+        var serviceProvider = new TestServiceProvider();
+        var command = new Command("test");
+        var context = new CommandActionBuilderContext(typeof(CommandWithIntCompletions), command, serviceProvider);
+
+        // Act
+        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithIntCompletions));
+        builderDelegate(context);
+
+        // Assert
+        Assert.Single(command.Options);
+        var portOption = command.Options.FirstOrDefault(o => o.Name == "--port");
+        Assert.NotNull(portOption);
+        Assert.Contains(portOption.Aliases, x => x == "-p");
+    }
+
+    [Fact]
+    public async Task CreateReflectionBasedDelegate_Operation_WithIntCompletions_SetsValue()
+    {
+        // Arrange
+        var serviceProvider = new TestServiceProvider();
+        var command = new Command("test");
+        var context = new CommandActionBuilderContext(typeof(CommandWithIntCompletions), command, serviceProvider);
+
+        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithIntCompletions));
+        builderDelegate(context);
+
+        var commandInstance = new CommandWithIntCompletions();
+        var rootCommand = new RootCommand();
+        rootCommand.Subcommands.Add(command);
+        var parseResult = rootCommand.Parse("test --port 8080");
+        var commandContext = new CommandContext(typeof(CommandWithIntCompletions), commandInstance, CancellationToken.None);
+
+        // Act
+        await context.Operation!(commandInstance, parseResult, commandContext);
+
+        // Assert
+        var portOption = (Option<int>)command.Options.First(o => o.Name == "--port");
+        Assert.Equal(8080, parseResult.GetValue(portOption));
+        Assert.Equal(8080, commandInstance.Port);
+    }
+
+    [Fact]
+    public async Task CreateReflectionBasedDelegate_Operation_WithCompletions_AcceptsValueNotInList()
+    {
+        // Arrange
+        var serviceProvider = new TestServiceProvider();
+        var command = new Command("test");
+        var context = new CommandActionBuilderContext(typeof(CommandWithCompletions), command, serviceProvider);
+
+        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithCompletions));
+        builderDelegate(context);
+
+        var commandInstance = new CommandWithCompletions();
+        var rootCommand = new RootCommand();
+        rootCommand.Subcommands.Add(command);
+        var parseResult = rootCommand.Parse("test --format csv");
+        var commandContext = new CommandContext(typeof(CommandWithCompletions), commandInstance, CancellationToken.None);
+
+        // Act
+        await context.Operation!(commandInstance, parseResult, commandContext);
+
+        // Assert - Completions provide suggestions but don't validate
+        var formatOption = (Option<string>)command.Options.First(o => o.Name == "--format");
+        Assert.Equal("csv", parseResult.GetValue(formatOption));
+        Assert.Equal("csv", commandInstance.Format);
     }
 }

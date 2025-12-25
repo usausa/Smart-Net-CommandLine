@@ -86,7 +86,7 @@ public sealed class MessageCommand : ICommandHandler
         this.log = log;
     }
 
-    [Option<string>("--text", "-t", Description = "Text to show", IsRequired = true)]
+    [Option<string>("--text", "-t", Description = "Text to show", Required = true)]
     public string Text { get; set; } = default!;
 
     public ValueTask ExecuteAsync(CommandContext context)

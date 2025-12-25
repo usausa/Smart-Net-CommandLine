@@ -40,7 +40,14 @@ internal static class CommandActionBuilderHelper
                     descriptionProperty?.SetValue(option, description);
                 }
 
-                option.Required = attribute.GetIsRequired();
+                option.Required = attribute.GetRequired();
+
+                // Set completion sources
+                var completions = attribute.GetCompletions();
+                if (completions.Length > 0)
+                {
+                    SetCompletionSources(option, completions);
+                }
 
                 // Set default value factory
                 var defaultValue = GetDefaultValue(property, attribute);
@@ -78,7 +85,7 @@ internal static class CommandActionBuilderHelper
             return (true, defaultValue);
         }
 
-        if (!attribute.GetIsRequired())
+        if (!attribute.GetRequired())
         {
             defaultValue = property.PropertyType.IsValueType ? Activator.CreateInstance(property.PropertyType) : null;
             return (true, defaultValue);
@@ -107,6 +114,29 @@ internal static class CommandActionBuilderHelper
     private static Func<ArgumentResult, T> CreateDefaultValueFactory<T>(object? value)
     {
         return _ => (T)value!;
+    }
+
+    private static void SetCompletionSources(Option option, string[] completions)
+    {
+        // Skip if no completions
+        if (completions.Length == 0)
+        {
+            return;
+        }
+
+        var completionSourcesProperty = option.GetType().GetProperty("CompletionSources", BindingFlags.Public | BindingFlags.Instance);
+        if (completionSourcesProperty is not null)
+        {
+            var completionSources = completionSourcesProperty.GetValue(option);
+            if (completionSources is not null)
+            {
+                var addMethod = completionSources.GetType().GetMethod("Add", BindingFlags.Public | BindingFlags.Instance, null, [typeof(string[])], null);
+                if (addMethod is not null)
+                {
+                    addMethod.Invoke(completionSources, [completions]);
+                }
+            }
+        }
     }
 
     private static void SetOptionValue(ICommandHandler handler, ParseResult parseResult, PropertyInfo property, Option option)

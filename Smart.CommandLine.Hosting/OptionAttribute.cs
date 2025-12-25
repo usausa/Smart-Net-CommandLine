@@ -9,9 +9,11 @@ public interface IOptionAttribute
 
     string? GetDescription();
 
-    bool GetIsRequired();
+    bool GetRequired();
 
     object? GetDefaultValue();
+
+    string[] GetCompletions();
 }
 #pragma warning restore CA1711
 
@@ -24,7 +26,7 @@ public abstract class BaseOptionAttribute : Attribute, IOptionAttribute
 
     public string? Description { get; set; }
 
-    public bool IsRequired { get; set; }
+    public bool Required { get; set; }
 
     protected BaseOptionAttribute(string name, string[] aliases)
     {
@@ -39,27 +41,37 @@ public abstract class BaseOptionAttribute : Attribute, IOptionAttribute
 
     string? IOptionAttribute.GetDescription() => Description;
 
-    bool IOptionAttribute.GetIsRequired() => IsRequired;
+    bool IOptionAttribute.GetRequired() => Required;
 
     object? IOptionAttribute.GetDefaultValue() => ResolveDefaultValue();
 
+    string[] IOptionAttribute.GetCompletions() => ResolveCompletions();
+
     protected abstract object? ResolveDefaultValue();
+
+    protected abstract string[] ResolveCompletions();
 #pragma warning restore CA1033
 }
 
 public sealed class OptionAttribute : BaseOptionAttribute
 {
+    public string[]? Completions { get; set; }
+
     public OptionAttribute(string name, params string[] aliases)
         : base(name, aliases)
     {
     }
 
     protected override object? ResolveDefaultValue() => null;
+
+    protected override string[] ResolveCompletions() => Completions ?? [];
 }
 
 public sealed class OptionAttribute<T> : BaseOptionAttribute
 {
     public T? DefaultValue { get; set; }
+
+    public T[]? Completions { get; set; }
 
     public OptionAttribute(string name, params string[] aliases)
         : base(name, aliases)
@@ -67,4 +79,7 @@ public sealed class OptionAttribute<T> : BaseOptionAttribute
     }
 
     protected override object? ResolveDefaultValue() => DefaultValue;
+
+    protected override string[] ResolveCompletions() =>
+        Completions is { Length: > 0 } ? Completions.Select(c => c?.ToString() ?? string.Empty).ToArray() : [];
 }
