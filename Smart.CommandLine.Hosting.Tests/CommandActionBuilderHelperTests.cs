@@ -86,7 +86,7 @@ public sealed class CommandActionBuilderHelperTests
 
     private sealed class CommandWithCompletions : ICommandHandler
     {
-        [Option("--format", "-f", Completions = new[] { "json", "xml", "yaml" })]
+        [Option("--format", "-f", Completions = ["json", "xml", "yaml"])]
         public string Format { get; set; } = default!;
 
         public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
@@ -94,7 +94,7 @@ public sealed class CommandActionBuilderHelperTests
 
     private sealed class CommandWithGenericCompletions : ICommandHandler
     {
-        [Option<string>("--level", "-l", Completions = new[] { "debug", "info", "warning", "error" })]
+        [Option<string>("--level", "-l", Completions = ["debug", "info", "warning", "error"])]
         public string Level { get; set; } = default!;
 
         public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
@@ -102,7 +102,7 @@ public sealed class CommandActionBuilderHelperTests
 
     private sealed class CommandWithIntCompletions : ICommandHandler
     {
-        [Option<int>("--port", "-p", Completions = new[] { 80, 443, 8080, 8443 })]
+        [Option<int>("--port", "-p", Completions = [80, 443, 8080, 8443])]
         public int Port { get; set; }
 
         public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;

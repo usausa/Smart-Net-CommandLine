@@ -76,7 +76,7 @@ return await host.RunAsync();
 - Example
 
 ```csharp
-[Command("message", Description = "Display text")]
+[Command("message", "Display text")]
 public sealed class MessageCommand : ICommandHandler
 {
     private readonly ILogger<MessageCommand> log;

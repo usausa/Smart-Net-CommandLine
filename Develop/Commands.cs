@@ -113,7 +113,7 @@ public sealed class LoggingFilter : ICommandFilter
 // Basic commands
 //--------------------------------------------------------------------------------
 
-[Command("message", Description = "Basic usage")]
+[Command("message", "Basic usage")]
 public sealed class MessageCommand : ICommandHandler
 {
     private readonly ILogger<MessageCommand> log;
@@ -133,7 +133,7 @@ public sealed class MessageCommand : ICommandHandler
     }
 }
 
-[Command("greet", Description = "DI service")]
+[Command("greet", "DI service")]
 public sealed class GreetCommand : ICommandHandler
 {
     private readonly GreetService greetService;
@@ -163,7 +163,7 @@ public sealed class GreetCommand : ICommandHandler
 }
 
 [Filter<LoggingFilter>]
-[Command("filter", Description = "Filter test")]
+[Command("filter", "Filter test")]
 public sealed class FilterCommand : ICommandHandler
 {
     private readonly ILogger<FilterCommand> log;
@@ -186,7 +186,7 @@ public sealed class FilterCommand : ICommandHandler
     }
 }
 
-[Command("exception", Description = "Exception test")]
+[Command("exception", "Exception test")]
 public sealed class ExceptionCommand : ICommandHandler
 {
     public ValueTask ExecuteAsync(CommandContext context)
@@ -199,12 +199,12 @@ public sealed class ExceptionCommand : ICommandHandler
 // Sub command
 //--------------------------------------------------------------------------------
 
-[Command("user", Description = "User level 1")]
+[Command("user", "User level 1")]
 public sealed class UserCommand
 {
 }
 
-[Command("list", Description = "User level 1-1")]
+[Command("list", "User level 1-1")]
 public sealed class UserListCommand : ICommandHandler
 {
     private readonly ILogger<UserListCommand> log;
@@ -228,7 +228,7 @@ public sealed class UserListCommand : ICommandHandler
     }
 }
 
-[Command("add", Description = "User level 1-2")]
+[Command("add", "User level 1-2")]
 public sealed class UserAddCommand : ICommandHandler
 {
     private readonly ILogger<UserAddCommand> log;
@@ -251,7 +251,7 @@ public sealed class UserAddCommand : ICommandHandler
     }
 }
 
-[Command("role", Description = "User level 1-3")]
+[Command("role", "User level 1-3")]
 public sealed class UserRoleCommand
 {
 }
@@ -267,7 +267,7 @@ public abstract class UserRoleCommandBase : ICommandHandler
     public abstract ValueTask ExecuteAsync(CommandContext context);
 }
 
-[Command("assign", Description = "User level 1-3-1")]
+[Command("assign", "User level 1-3-1")]
 public sealed class UserRoleAssignCommand : UserRoleCommandBase
 {
     private readonly ILogger<UserRoleAssignCommand> log;
@@ -284,7 +284,7 @@ public sealed class UserRoleAssignCommand : UserRoleCommandBase
     }
 }
 
-[Command("remove", Description = "User level 1-3-2")]
+[Command("remove", "User level 1-3-2")]
 public sealed class UserRoleRemoveCommand : UserRoleCommandBase
 {
     private readonly ILogger<UserRoleRemoveCommand> log;
