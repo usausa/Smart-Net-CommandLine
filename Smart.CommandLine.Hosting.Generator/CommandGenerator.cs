@@ -143,52 +143,57 @@ public sealed class CommandGenerator : IIncrementalGenerator
     {
         var filters = new List<FilterModel>();
 
-        foreach (var attribute in typeSymbol.GetAttributes())
+        // Check current type and all base types for FilterAttribute
+        var currentType = typeSymbol;
+        while (currentType is not null && currentType.SpecialType != SpecialType.System_Object)
         {
-            if (attribute.AttributeClass is null)
+            foreach (var attribute in currentType.GetAttributes())
             {
-                continue;
-            }
-
-            // Check FilterAttribute
-            var baseType = attribute.AttributeClass;
-            while (baseType is not null)
-            {
-                if (baseType.ToDisplayString() == FilterAttributeFullName)
+                if (attribute.AttributeClass is null)
                 {
-                    break;
+                    continue;
                 }
-                baseType = baseType.BaseType;
-            }
 
-            if (baseType is null)
-            {
-                continue;
-            }
-
-            // Get Order property
-            var order = 0;
-            foreach (var namedArg in attribute.NamedArguments)
-            {
-                if (namedArg is { Key: "Order", Value.Value: int orderValue })
+                // Check if it's FilterAttribute<TFilter> (generic type)
+                if (!attribute.AttributeClass.IsGenericType)
                 {
-                    order = orderValue;
-                    break;
+                    continue;
+                }
+
+                // Get the unbound generic type and check its full name
+                var unboundGenericType = attribute.AttributeClass.OriginalDefinition;
+                var fullName = $"{unboundGenericType.ContainingNamespace.ToDisplayString()}.{unboundGenericType.Name}";
+
+                if (fullName != FilterAttributeFullName)
+                {
+                    continue;
+                }
+
+                // Get Order property
+                var order = 0;
+                foreach (var namedArg in attribute.NamedArguments)
+                {
+                    if (namedArg is { Key: "Order", Value.Value: int orderValue })
+                    {
+                        order = orderValue;
+                        break;
+                    }
+                }
+
+                // Get TFilter type (from generic argument)
+                string? filterType = null;
+                if (attribute.AttributeClass.TypeArguments.Length > 0)
+                {
+                    filterType = attribute.AttributeClass.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                }
+
+                if (filterType is not null)
+                {
+                    filters.Add(new FilterModel(filterType, order));
                 }
             }
 
-            // Get TFilter type (from generic argument)
-            string? filterType = null;
-            if (attribute.AttributeClass is { IsGenericType: true } namedType &&
-                namedType.TypeArguments.Length > 0)
-            {
-                filterType = namedType.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            }
-
-            if (filterType is not null)
-            {
-                filters.Add(new FilterModel(filterType, order));
-            }
+            currentType = currentType.BaseType;
         }
 
         return new EquatableArray<FilterModel>(filters.ToArray());
