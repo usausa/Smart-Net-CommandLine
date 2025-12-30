@@ -1,7 +1,6 @@
 namespace Smart.CommandLine.Hosting;
 
 using System.CommandLine;
-using System.ComponentModel;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,13 +34,6 @@ public interface ICommandBuilder
     ICommandBuilder AddCommand<TCommand>(Action<ISubCommandBuilder>? configure = null)
         where TCommand : class;
 
-    // ReSharper disable once UnusedMemberInSuper.Global
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    ICommandBuilder AddCommand<TCommand>(
-        Action<CommandActionBuilderContext>? builder,
-        Action<ISubCommandBuilder>? configure = null)
-        where TCommand : class;
-
     ICommandBuilder AddGlobalFilter<TFilter>(int order = 0)
         where TFilter : class, ICommandFilter;
 
@@ -60,23 +52,11 @@ public interface IRootCommandBuilder
 
     IRootCommandBuilder UseHandler<THandler>()
         where THandler : class, ICommandHandler;
-
-    // ReSharper disable once UnusedMemberInSuper.Global
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    IRootCommandBuilder UseHandler<THandler>(Action<CommandActionBuilderContext>? builder)
-        where THandler : class, ICommandHandler;
 }
 
 public interface ISubCommandBuilder
 {
     ISubCommandBuilder AddSubCommand<TCommand>(
-        Action<ISubCommandBuilder>? configure = null)
-        where TCommand : class;
-
-    // ReSharper disable once UnusedMemberInSuper.Global
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    ISubCommandBuilder AddSubCommand<TCommand>(
-        Action<CommandActionBuilderContext>? builder,
         Action<ISubCommandBuilder>? configure = null)
         where TCommand : class;
 }

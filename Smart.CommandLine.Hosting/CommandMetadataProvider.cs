@@ -2,10 +2,79 @@ namespace Smart.CommandLine.Hosting;
 
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.ComponentModel;
 using System.Reflection;
 
-internal static class CommandActionBuilderHelper
+public static class CommandMetadataProvider
 {
+    //--------------------------------------------------------------------------------
+    // Command info
+    //--------------------------------------------------------------------------------
+
+    private static readonly Dictionary<Type, (string Name, string? Description)> CommandMetadata = new();
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static void AddCommandMetadata<TCommand>(string name, string? description = null)
+    {
+        var commandType = typeof(TCommand);
+        CommandMetadata[commandType] = (name, description);
+    }
+
+    internal static (string Name, string? Description) ResolveCommandMetadata(Type type)
+    {
+        if (CommandMetadata.TryGetValue(type, out var data))
+        {
+            return data;
+        }
+
+        var attribute = type.GetCustomAttribute<CommandAttribute>()!;
+        return (attribute.Name, attribute.Description);
+    }
+
+    //--------------------------------------------------------------------------------
+    // Filter descriptors
+    //--------------------------------------------------------------------------------
+
+    private static readonly Dictionary<Type, List<FilterDescriptor>> FilterDescriptors = new();
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static void AddFilterDescriptor<TTarget, TFilter>(int order)
+        where TFilter : class, ICommandFilter
+    {
+        var targetType = typeof(TTarget);
+        var filterType = typeof(TFilter);
+        if (!FilterDescriptors.TryGetValue(targetType, out var descriptors))
+        {
+            descriptors = new List<FilterDescriptor>();
+            FilterDescriptors[targetType] = descriptors;
+        }
+        descriptors.Add(new FilterDescriptor(filterType, order));
+    }
+
+    internal static IReadOnlyList<FilterDescriptor> GetFilterDescriptors(Type type)
+    {
+        if (FilterDescriptors.TryGetValue(type, out var descriptors))
+        {
+            return descriptors;
+        }
+
+        descriptors = new List<FilterDescriptor>();
+        FilterDescriptors[type] = descriptors;
+        // ReSharper disable once LoopCanBeConvertedToQuery
+        foreach (var attribute in type.GetCustomAttributes(true).OfType<FilterAttribute>())
+        {
+            descriptors.Add(new FilterDescriptor(attribute.FilterType, attribute.Order));
+        }
+
+        return descriptors;
+    }
+
+    //--------------------------------------------------------------------------------
+    // Action builder
+    //--------------------------------------------------------------------------------
+
+    private static readonly Dictionary<Type, Action<CommandActionBuilderContext>> ActionBuilders = new();
+
     private static readonly MethodInfo GetValueMethod = typeof(ParseResult)
         .GetMethods(BindingFlags.Public | BindingFlags.Instance)
         .First(x => x is { Name: nameof(ParseResult.GetValue), IsGenericMethodDefinition: true } &&
@@ -13,7 +82,25 @@ internal static class CommandActionBuilderHelper
                     x.GetParameters()[0].ParameterType.IsGenericType &&
                     x.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Option<>));
 
-    public static Action<CommandActionBuilderContext> CreateReflectionBasedDelegate(Type type)
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static void AddActionBuilder<TCommand>(Action<CommandActionBuilderContext> builder)
+    {
+        var commandType = typeof(TCommand);
+        ActionBuilders[commandType] = builder;
+    }
+
+    internal static Action<CommandActionBuilderContext> ResolveActionBuilder(Type type)
+    {
+        if (ActionBuilders.TryGetValue(type, out var builder))
+        {
+            return builder;
+        }
+
+        // Reflection fallback
+        return CreateReflectionBasedDelegate(type);
+    }
+
+    private static Action<CommandActionBuilderContext> CreateReflectionBasedDelegate(Type type)
     {
         return context =>
         {
@@ -139,7 +226,7 @@ internal static class CommandActionBuilderHelper
         }
 
         // Create default value factory delegate
-        var factoryCreateMethod = typeof(CommandActionBuilderHelper)
+        var factoryCreateMethod = typeof(CommandMetadataProvider)
             .GetMethod(nameof(CreateDefaultValueFactory), BindingFlags.NonPublic | BindingFlags.Static)!
             .MakeGenericMethod(propertyType);
         var factoryDelegate = factoryCreateMethod.Invoke(null, [value]);

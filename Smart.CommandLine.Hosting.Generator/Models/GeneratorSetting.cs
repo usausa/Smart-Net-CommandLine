@@ -1,4 +1,4 @@
-namespace Smart.CommandLine.Hosting.Generator.Models;
+//namespace Smart.CommandLine.Hosting.Generator.Models;
 
-internal record GeneratorSetting(
-    bool Enable);
+//internal record GeneratorSetting(
+//    bool Enable);

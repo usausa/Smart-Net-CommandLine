@@ -5,7 +5,7 @@ namespace Smart.CommandLine.Hosting;
 
 using System.CommandLine;
 
-public sealed class CommandActionBuilderHelperTests
+public sealed class CommandMetadataProviderTests
 {
     private sealed class SimpleCommand : ICommandHandler
     {
@@ -133,7 +133,7 @@ public sealed class CommandActionBuilderHelperTests
     //--------------------------------------------------------------------------------
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithSimpleCommand_CreatesValidDelegate()
+    public void ResolveActionBuilder_WithSimpleCommand_CreatesValidDelegate()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -141,8 +141,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(SimpleCommand), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(SimpleCommand));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(SimpleCommand));
+        actionBuilder(context);
 
         // Assert
         Assert.NotNull(context.Operation);
@@ -152,7 +152,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_AddsOptionsWithCorrectNames()
+    public void ResolveActionBuilder_AddsOptionsWithCorrectNames()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -160,8 +160,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(SimpleCommand), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(SimpleCommand));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(SimpleCommand));
+        actionBuilder(context);
 
         // Assert
         var nameOption = command.Options.FirstOrDefault(o => o.Name == "--name");
@@ -171,7 +171,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithDescription_SetsDescriptionProperty()
+    public void ResolveActionBuilder_WithDescription_SetsDescriptionProperty()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -179,8 +179,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(CommandWithDescription), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithDescription));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithDescription));
+        actionBuilder(context);
 
         // Assert
         var verboseOption = command.Options.FirstOrDefault(o => o.Name == "--verbose");
@@ -189,7 +189,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithAliases_AddsAllAliases()
+    public void ResolveActionBuilder_WithAliases_AddsAllAliases()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -197,8 +197,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(CommandWithAliases), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithAliases));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithAliases));
+        actionBuilder(context);
 
         // Assert
         var nameOption = command.Options.FirstOrDefault(o => o.Name == "--name");
@@ -208,7 +208,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithDefaultValue_SetsDefaultValueFactory()
+    public void ResolveActionBuilder_WithDefaultValue_SetsDefaultValueFactory()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -216,8 +216,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(CommandWithDefaultValue), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithDefaultValue));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithDefaultValue));
+        actionBuilder(context);
 
         // Assert
         Assert.Equal(2, command.Options.Count);
@@ -226,7 +226,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithMultipleOptions_AddsAllOptions()
+    public void ResolveActionBuilder_WithMultipleOptions_AddsAllOptions()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -234,8 +234,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(CommandWithMultipleOptions), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithMultipleOptions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithMultipleOptions));
+        actionBuilder(context);
 
         // Assert
         Assert.Equal(3, command.Options.Count);
@@ -245,7 +245,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithNullableType_AddsOption()
+    public void ResolveActionBuilder_WithNullableType_AddsOption()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -253,8 +253,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(CommandWithNullableType), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithNullableType));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithNullableType));
+        actionBuilder(context);
 
         // Assert
         Assert.Single(command.Options);
@@ -262,7 +262,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithoutOptions_DoesNotAddOptions()
+    public void ResolveActionBuilder_WithoutOptions_DoesNotAddOptions()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -270,8 +270,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(CommandWithoutOptions), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithoutOptions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithoutOptions));
+        actionBuilder(context);
 
         // Assert
         Assert.Empty(command.Options);
@@ -279,15 +279,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_ExecutesCommand()
+    public async Task ResolveActionBuilder_Operation_ExecutesCommand()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithoutOptions), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithoutOptions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithoutOptions));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithoutOptions();
         var rootCommand = new RootCommand();
@@ -303,15 +303,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_SetsPropertyValues()
+    public async Task ResolveActionBuilder_Operation_SetsPropertyValues()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(SimpleCommand), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(SimpleCommand));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(SimpleCommand));
+        actionBuilder(context);
 
         var commandInstance = new SimpleCommand();
         var rootCommand = new RootCommand();
@@ -335,15 +335,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithDefaultValues_UsesDefaults()
+    public async Task ResolveActionBuilder_Operation_WithDefaultValues_UsesDefaults()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithDefaultValue), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithDefaultValue));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithDefaultValue));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithDefaultValue();
         var rootCommand = new RootCommand();
@@ -366,15 +366,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithPartialValues_UsesProvidedAndDefaults()
+    public async Task ResolveActionBuilder_Operation_WithPartialValues_UsesProvidedAndDefaults()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithDefaultValue), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithDefaultValue));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithDefaultValue));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithDefaultValue();
         var rootCommand = new RootCommand();
@@ -397,15 +397,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithAliases_ParsesCorrectly()
+    public async Task ResolveActionBuilder_Operation_WithAliases_ParsesCorrectly()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithAliases), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithAliases));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithAliases));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithAliases();
         var rootCommand = new RootCommand();
@@ -425,15 +425,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithBooleanOption_ParsesCorrectly()
+    public async Task ResolveActionBuilder_Operation_WithBooleanOption_ParsesCorrectly()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithDescription), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithDescription));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithDescription));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithDescription();
         var rootCommand = new RootCommand();
@@ -453,7 +453,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithNonICommandType_CreatesDelegate()
+    public void ResolveActionBuilder_WithNonICommandType_CreatesDelegate()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -461,8 +461,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(NonICommandType), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(NonICommandType));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(NonICommandType));
+        actionBuilder(context);
 
         // Assert
         Assert.NotNull(context.Operation);
@@ -470,7 +470,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithRequiredOption_AddsOption()
+    public void ResolveActionBuilder_WithRequiredOption_AddsOption()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -478,8 +478,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(CommandWithRequired), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithRequired));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithRequired));
+        actionBuilder(context);
 
         // Assert
         Assert.Single(command.Options);
@@ -487,7 +487,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_SetsOperationInContext()
+    public void ResolveActionBuilder_SetsOperationInContext()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -495,23 +495,23 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(SimpleCommand), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(SimpleCommand));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(SimpleCommand));
+        actionBuilder(context);
 
         // Assert
         Assert.NotNull(context.Operation);
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithMultipleOptions_SetsAllProperties()
+    public async Task ResolveActionBuilder_Operation_WithMultipleOptions_SetsAllProperties()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithMultipleOptions), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithMultipleOptions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithMultipleOptions));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithMultipleOptions();
         var rootCommand = new RootCommand();
@@ -537,15 +537,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithNullableType_SetsValue()
+    public async Task ResolveActionBuilder_Operation_WithNullableType_SetsValue()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithNullableType), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithNullableType));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithNullableType));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithNullableType();
         var rootCommand = new RootCommand();
@@ -563,15 +563,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithNullableType_WithoutValue_SetsNull()
+    public async Task ResolveActionBuilder_Operation_WithNullableType_WithoutValue_SetsNull()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithNullableType), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithNullableType));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithNullableType));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithNullableType();
         var rootCommand = new RootCommand();
@@ -591,7 +591,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithCompletions_AddsOption()
+    public void ResolveActionBuilder_WithCompletions_AddsOption()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -599,8 +599,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(CommandWithCompletions), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithCompletions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithCompletions));
+        actionBuilder(context);
 
         // Assert
         Assert.Single(command.Options);
@@ -610,15 +610,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithCompletions_AcceptsAnyValue()
+    public async Task ResolveActionBuilder_Operation_WithCompletions_AcceptsAnyValue()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithCompletions), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithCompletions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithCompletions));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithCompletions();
         var rootCommand = new RootCommand();
@@ -636,7 +636,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithGenericCompletions_AddsOption()
+    public void ResolveActionBuilder_WithGenericCompletions_AddsOption()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -644,8 +644,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(CommandWithGenericCompletions), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithGenericCompletions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithGenericCompletions));
+        actionBuilder(context);
 
         // Assert
         Assert.Single(command.Options);
@@ -655,15 +655,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithGenericCompletions_SetsValue()
+    public async Task ResolveActionBuilder_Operation_WithGenericCompletions_SetsValue()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithGenericCompletions), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithGenericCompletions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithGenericCompletions));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithGenericCompletions();
         var rootCommand = new RootCommand();
@@ -681,7 +681,7 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public void CreateReflectionBasedDelegate_WithIntCompletions_AddsOption()
+    public void ResolveActionBuilder_WithIntCompletions_AddsOption()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -689,8 +689,8 @@ public sealed class CommandActionBuilderHelperTests
         var context = new CommandActionBuilderContext(typeof(CommandWithIntCompletions), command, serviceProvider);
 
         // Act
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithIntCompletions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithIntCompletions));
+        actionBuilder(context);
 
         // Assert
         Assert.Single(command.Options);
@@ -700,15 +700,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithIntCompletions_SetsValue()
+    public async Task ResolveActionBuilder_Operation_WithIntCompletions_SetsValue()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithIntCompletions), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithIntCompletions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithIntCompletions));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithIntCompletions();
         var rootCommand = new RootCommand();
@@ -726,15 +726,15 @@ public sealed class CommandActionBuilderHelperTests
     }
 
     [Fact]
-    public async Task CreateReflectionBasedDelegate_Operation_WithCompletions_AcceptsValueNotInList()
+    public async Task ResolveActionBuilder_Operation_WithCompletions_AcceptsValueNotInList()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
         var command = new Command("test");
         var context = new CommandActionBuilderContext(typeof(CommandWithCompletions), command, serviceProvider);
 
-        var builderDelegate = CommandActionBuilderHelper.CreateReflectionBasedDelegate(typeof(CommandWithCompletions));
-        builderDelegate(context);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithCompletions));
+        actionBuilder(context);
 
         var commandInstance = new CommandWithCompletions();
         var rootCommand = new RootCommand();

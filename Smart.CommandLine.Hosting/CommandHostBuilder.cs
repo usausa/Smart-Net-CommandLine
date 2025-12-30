@@ -111,19 +111,17 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
 
         if (rootDescriptor is not null)
         {
-            // TODO Generator based
-            foreach (var attribute in rootDescriptor.CommandType.GetCustomAttributes<FilterAttribute>())
+            foreach (var filterDescriptor in CommandMetadataProvider.GetFilterDescriptors(rootDescriptor.CommandType))
             {
-                filterTypes.Add(attribute.FilterType);
+                filterTypes.Add(filterDescriptor.FilterType);
             }
         }
 
-        foreach (var descriptor in commandDescriptors)
+        foreach (var commandDescriptor in commandDescriptors)
         {
-            // TODO Generator based
-            foreach (var attribute in descriptor.CommandType.GetCustomAttributes<FilterAttribute>())
+            foreach (var filterDescriptor in CommandMetadataProvider.GetFilterDescriptors(commandDescriptor.CommandType))
             {
-                filterTypes.Add(attribute.FilterType);
+                filterTypes.Add(filterDescriptor.FilterType);
             }
         }
 
@@ -159,10 +157,9 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
 
     private static Command CreateCommand(IServiceProvider serviceProvider, FilterCollection globalFilters, CommandDescriptor descriptor)
     {
-        // TODO Generator based
         // Create command
-        var attribute = descriptor.CommandType.GetCustomAttribute<CommandAttribute>()!;
-        var command = new Command(attribute.Name, attribute.Description);
+        var (name, description) = CommandMetadataProvider.ResolveCommandMetadata(descriptor.CommandType);
+        var command = new Command(name, description);
 
         // Build executable command
         if (typeof(ICommandHandler).IsAssignableFrom(descriptor.CommandType))
@@ -183,7 +180,7 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
     private static void SetupCommandHandler(IServiceProvider serviceProvider, FilterCollection globalFilters, Command command, CommandDescriptor descriptor)
     {
         // Build command
-        var actionBuilder = descriptor.ActionBuilder ?? CommandActionBuilderHelper.CreateReflectionBasedDelegate(descriptor.CommandType);
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(descriptor.CommandType);
         var builderContext = new CommandActionBuilderContext(descriptor.CommandType, command, serviceProvider);
 
         actionBuilder(builderContext);
@@ -273,18 +270,12 @@ internal sealed class CommandBuilder : ICommandBuilder
     public ICommandBuilder AddCommand<TCommand>(Action<ISubCommandBuilder>? configure = null)
         where TCommand : class
     {
-        return AddCommand<TCommand>(null, configure);
-    }
-
-    public ICommandBuilder AddCommand<TCommand>(Action<CommandActionBuilderContext>? builder, Action<ISubCommandBuilder>? configure = null)
-        where TCommand : class
-    {
         if (typeof(ICommandHandler).IsAssignableFrom(typeof(TCommand)))
         {
             services.AddTransient<TCommand>();
         }
 
-        var descriptor = new CommandDescriptor(typeof(TCommand), builder);
+        var descriptor = new CommandDescriptor(typeof(TCommand));
 
         if (configure is not null)
         {
@@ -373,14 +364,8 @@ internal sealed class RootCommandBuilder : IRootCommandBuilder
     public IRootCommandBuilder UseHandler<THandler>()
         where THandler : class, ICommandHandler
     {
-        return UseHandler<THandler>(null);
-    }
-
-    public IRootCommandBuilder UseHandler<THandler>(Action<CommandActionBuilderContext>? builder)
-        where THandler : class, ICommandHandler
-    {
         services.AddTransient<THandler>();
-        rootDescriptor = new CommandDescriptor(typeof(THandler), builder);
+        rootDescriptor = new CommandDescriptor(typeof(THandler));
         return this;
     }
 
@@ -434,18 +419,12 @@ internal sealed class SubCommandBuilder : ISubCommandBuilder
     public ISubCommandBuilder AddSubCommand<TCommand>(Action<ISubCommandBuilder>? configure = null)
         where TCommand : class
     {
-        return AddSubCommand<TCommand>(null, configure);
-    }
-
-    public ISubCommandBuilder AddSubCommand<TCommand>(Action<CommandActionBuilderContext>? builder, Action<ISubCommandBuilder>? configure = null)
-        where TCommand : class
-    {
         if (typeof(ICommandHandler).IsAssignableFrom(typeof(TCommand)))
         {
             services.AddTransient<TCommand>();
         }
 
-        var descriptor = new CommandDescriptor(typeof(TCommand), builder);
+        var descriptor = new CommandDescriptor(typeof(TCommand));
 
         if (configure is not null)
         {

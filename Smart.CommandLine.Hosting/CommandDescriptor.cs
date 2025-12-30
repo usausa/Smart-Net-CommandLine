@@ -13,11 +13,8 @@ internal sealed class CommandDescriptor
         }
     }
 
-    public Action<CommandActionBuilderContext>? ActionBuilder { get; }
-
-    public CommandDescriptor(Type commandType, Action<CommandActionBuilderContext>? builder = null)
+    public CommandDescriptor(Type commandType)
     {
         CommandType = commandType;
-        ActionBuilder = builder;
     }
 }

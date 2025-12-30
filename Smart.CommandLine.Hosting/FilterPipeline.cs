@@ -1,7 +1,5 @@
 namespace Smart.CommandLine.Hosting;
 
-using System.Reflection;
-
 internal sealed class FilterPipeline
 {
     private readonly IServiceProvider serviceProvider;
@@ -20,12 +18,7 @@ internal sealed class FilterPipeline
         var filters = globalFilters.Descriptors is not null
             ? new List<FilterDescriptor>(globalFilters.Descriptors)
             : [];
-
-        // ReSharper disable once LoopCanBeConvertedToQuery
-        foreach (var attribute in context.CommandType.GetCustomAttributes<FilterAttribute>())
-        {
-            filters.Add(new FilterDescriptor(attribute.FilterType, attribute.Order));
-        }
+        filters.AddRange(CommandMetadataProvider.GetFilterDescriptors(context.CommandType));
 
         if (filters.Count == 0)
         {
