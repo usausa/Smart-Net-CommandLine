@@ -3,7 +3,7 @@ namespace Smart.CommandLine.Hosting.Generator;
 using Microsoft.CodeAnalysis;
 
 [Generator]
-public sealed class TemplateGenerator : IIncrementalGenerator
+public sealed class CommandGenerator : IIncrementalGenerator
 {
     //private const string EnableInterceptorOptionName = "build_property.EnableSmartCommandLineHostingGenerator";
 
