@@ -1,17 +1,22 @@
-using SourceGenerateHelper;
+using Smart.CommandLine.Hosting.Generator.Models;
 
 namespace Smart.CommandLine.Hosting.Generator;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
-
+using Microsoft.CodeAnalysis.Text;
+using SourceGenerateHelper;
 using System.Collections.Immutable;
+using System.Text;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxTokenParser;
 
 [Generator]
 public sealed class CommandGenerator : IIncrementalGenerator
 {
+    private const string EnableInterceptorOptionName = "build_property.EnableSmartCommandLineHostingGenerator";
+
     private const string AddCommandMethodName = "AddCommand";
     private const string AddSubCommandMethodName = "AddSubCommand";
     private const string UseHandlerMethodName = "UseHandler";
@@ -30,6 +35,10 @@ public sealed class CommandGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        // Read setting
+        var settingProvider = context.AnalyzerConfigOptionsProvider
+            .Select(static (provider, _) => SelectSetting(provider));
+
         // Find invocations
         var invocationProvider = context.SyntaxProvider
             .CreateSyntaxProvider(
@@ -38,22 +47,38 @@ public sealed class CommandGenerator : IIncrementalGenerator
             .Where(static x => x is not null)
             .Collect();
 
+        var combined = settingProvider.Combine(invocationProvider);
+
         // Execute
-        context.RegisterSourceOutput(invocationProvider, static (context, invocations) =>
+        context.RegisterSourceOutput(combined, static (context, source) =>
         {
+            var (setting, invocations) = source;
+
+            if (!setting.Enable)
+            {
+                return;
+            }
+
             if (invocations.IsEmpty)
             {
                 return;
             }
 
-            // TODO: Generate code based on collected invocations
-            // For now, just ensure the collection works
+            Execute(context, invocations!);
         });
     }
 
     // ------------------------------------------------------------
     // Parser
     // ------------------------------------------------------------
+
+    private static GeneratorSetting SelectSetting(AnalyzerConfigOptionsProvider provider)
+    {
+        var enable = provider.GlobalOptions.TryGetValue(EnableInterceptorOptionName, out var value) &&
+                     bool.TryParse(value, out var result) &&
+                     result;
+        return new GeneratorSetting(enable);
+    }
 
     private static bool IsTargetInvocation(SyntaxNode node)
     {
@@ -79,7 +104,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
         return methodName is AddCommandMethodName or AddSubCommandMethodName or UseHandlerMethodName;
     }
 
-    private static InvocationModel? GetInvocationModel(GeneratorSyntaxContext context)
+    private static Result<InvocationModel>? GetInvocationModel(GeneratorSyntaxContext context)
     {
         var invocation = (InvocationExpressionSyntax)context.Node;
 
@@ -121,14 +146,14 @@ public sealed class CommandGenerator : IIncrementalGenerator
         // Extract option metadata
         var options = ExtractOptionMetadata(typeArgument);
 
-        return new InvocationModel(
+        return Results.Success(new InvocationModel(
             typeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             typeArgument.Name,
             receiverType,
             method.Name,
             commandInfo,
             filters,
-            options);
+            options));
     }
 
     private static CommandMetadata? ExtractCommandMetadata(ITypeSymbol typeSymbol)
@@ -303,7 +328,20 @@ public sealed class CommandGenerator : IIncrementalGenerator
                                 {
                                     genericTypeArgument = namedType.TypeArguments[0];
                                 }
-                                completions = ExtractCompletionsPropertyFromSyntax(attribute, genericTypeArgument);
+
+                                // Get the syntax node for the attribute
+                                if (attribute.ApplicationSyntaxReference?.GetSyntax() is AttributeSyntax attributeSyntax &&
+                                    attributeSyntax.ArgumentList is not null)
+                                {
+                                    foreach (var argument in attributeSyntax.ArgumentList.Arguments)
+                                    {
+                                        if (argument.NameEquals?.Name.Identifier.Text == "Completions")
+                                        {
+                                            completions = ExtractCompletionsPropertyFromSyntax(argument.Expression, genericTypeArgument);
+                                            break;
+                                        }
+                                    }
+                                }
                                 break;
                         }
                     }
@@ -351,56 +389,81 @@ public sealed class CommandGenerator : IIncrementalGenerator
         return ImmutableArray<string>.Empty;
     }
 
-    private static ImmutableArray<string> ExtractCompletionsPropertyFromSyntax(AttributeData attr, ITypeSymbol? genericTypeArgument)
+    private static ImmutableArray<string> ExtractCompletionsPropertyFromSyntax(ExpressionSyntax expression, ITypeSymbol? genericTypeArgument)
     {
-        // Get the syntax node for the attribute
-        if (attr.ApplicationSyntaxReference?.GetSyntax() is not AttributeSyntax attributeSyntax)
-        {
-            return ImmutableArray<string>.Empty;
-        }
+        var completions = ImmutableArray.CreateBuilder<string>();
 
-        // Find the Completions argument in the attribute syntax
-        if (attributeSyntax.ArgumentList is null)
+        // Check for implicit array creation: new[] { ... }
+        if (expression is ImplicitArrayCreationExpressionSyntax arrayCreation)
         {
-            return ImmutableArray<string>.Empty;
-        }
-
-        foreach (var argument in attributeSyntax.ArgumentList.Arguments)
-        {
-            // Check if this is a named argument with name "Completions"
-            if (argument.NameEquals?.Name.Identifier.Text != "Completions")
+            foreach (var element in arrayCreation.Initializer.Expressions)
             {
-                continue;
+                // Get the text of the element as written in source
+                completions.Add(element.ToString());
             }
-
-            var completions = ImmutableArray.CreateBuilder<string>();
-
-            // Check for implicit array creation: new[] { ... }
-            if (argument.Expression is ImplicitArrayCreationExpressionSyntax arrayCreation)
+        }
+        // Check for collection expression: [ ... ] (C# 12+)
+        else if (expression is CollectionExpressionSyntax collectionExpression)
+        {
+            foreach (var element in collectionExpression.Elements)
             {
-                foreach (var element in arrayCreation.Initializer.Expressions)
+                if (element is ExpressionElementSyntax expressionElement)
                 {
                     // Get the text of the element as written in source
-                    completions.Add(element.ToString());
+                    completions.Add(expressionElement.Expression.ToString());
                 }
             }
-            // Check for collection expression: [ ... ] (C# 12+)
-            else if (argument.Expression is CollectionExpressionSyntax collectionExpression)
-            {
-                foreach (var element in collectionExpression.Elements)
-                {
-                    if (element is ExpressionElementSyntax expressionElement)
-                    {
-                        // Get the text of the element as written in source
-                        completions.Add(expressionElement.Expression.ToString());
-                    }
-                }
-            }
-
-            return completions.Count > 0 ? completions.ToImmutable() : ImmutableArray<string>.Empty;
         }
 
-        return ImmutableArray<string>.Empty;
+        return completions.Count > 0 ? completions.ToImmutable() : ImmutableArray<string>.Empty;
+    }
+
+    // ------------------------------------------------------------
+    // Execute
+    // ------------------------------------------------------------
+
+    private static void Execute(SourceProductionContext context, ImmutableArray<Result<InvocationModel>> invocations)
+    {
+        foreach (var info in invocations.SelectError())
+        {
+            context.ReportDiagnostic(info);
+        }
+
+        // Build initializer source
+        var builder = new SourceBuilder();
+
+        builder.AutoGenerated();
+        builder.EnableNullable();
+        builder.NewLine();
+
+        // class
+        builder
+            .Indent()
+            .Append("internal static class CommandInitializer")
+            .NewLine();
+        builder.BeginScope();
+
+        // method
+        builder
+            .Indent()
+            .Append("[global::System.Runtime.CompilerServices.ModuleInitializer]")
+            .NewLine();
+        builder
+            .Indent()
+            .Append("public static void Initialize()")
+            .NewLine();
+        builder.BeginScope();
+
+        // TODO
+
+
+        builder.EndScope();
+
+        builder.EndScope();
+
+        context.AddSource(
+            "CommandInitializer.g.cs",
+            SourceText.From(builder.ToString(), Encoding.UTF8));
     }
 
     // ------------------------------------------------------------
