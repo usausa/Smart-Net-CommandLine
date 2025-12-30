@@ -14,10 +14,6 @@
 
   <Import Project="..\Usa.Smart.CommandLine.Hosting.props" />
 
-  <PropertyGroup>
-    <EnableSmartCommandLineHostingGenerator>true</EnableSmartCommandLineHostingGenerator>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Smart.CommandLine.Hosting.Generator\Smart.CommandLine.Hosting.Generator.csproj" OutputItemType="analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Smart.CommandLine.Hosting\Smart.CommandLine.Hosting.csproj" />

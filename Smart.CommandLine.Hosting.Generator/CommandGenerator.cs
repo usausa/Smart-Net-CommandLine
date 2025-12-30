@@ -81,10 +81,12 @@ public sealed class CommandGenerator : IIncrementalGenerator
 
     private static GeneratorSetting SelectSetting(AnalyzerConfigOptionsProvider provider)
     {
-        var enable = provider.GlobalOptions.TryGetValue(EnableInterceptorOptionName, out var value) &&
-                     bool.TryParse(value, out var result) &&
-                     result;
-        return new GeneratorSetting(enable);
+        if (provider.GlobalOptions.TryGetValue(EnableInterceptorOptionName, out var value) && !String.IsNullOrEmpty(value))
+        {
+            return new GeneratorSetting(Boolean.TryParse(value, out var result) && result);
+        }
+
+        return new GeneratorSetting(true);
     }
 
     private static bool IsTargetInvocation(SyntaxNode node)
