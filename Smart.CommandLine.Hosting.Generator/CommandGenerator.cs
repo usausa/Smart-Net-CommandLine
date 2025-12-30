@@ -696,36 +696,4 @@ public sealed class CommandGenerator : IIncrementalGenerator
             .Append("});")
             .NewLine();
     }
-
-    // ------------------------------------------------------------
-    // Models
-    // ------------------------------------------------------------
-
-    internal sealed record InvocationModel(
-        string TypeFullName,
-        bool ImplementsHandler,
-        CommandModel CommandInfo,
-        EquatableArray<FilterModel> Filters,
-        EquatableArray<OptionModel> Options);
-
-    internal sealed record CommandModel(
-        string Name,
-        string? Description);
-
-    internal sealed record FilterModel(
-        string FilterType,
-        int Order);
-
-    internal sealed record OptionModel(
-        string PropertyName,
-        string PropertyType,
-        int Order,
-        int HierarchyLevel,
-        int PropertyIndex,
-        string Name,
-        EquatableArray<string> Aliases,
-        string? Description,
-        bool Required,
-        string? DefaultValue,
-        EquatableArray<string> Completions);
 }
