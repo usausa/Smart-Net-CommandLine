@@ -628,13 +628,8 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 .Append(");")
                 .NewLine();
 
-            if (i < sortedOptions.Count - 1)
-            {
-                builder.NewLine();
-            }
+            builder.NewLine();
         }
-
-        builder.NewLine();
 
         // Generate Operation
         builder
