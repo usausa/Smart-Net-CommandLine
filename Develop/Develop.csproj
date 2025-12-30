@@ -15,7 +15,7 @@
   <Import Project="..\Smart.CommandLine.Hosting.props" />
 
   <PropertyGroup>
-    <TemplateLibraryGeneratorValue>test</TemplateLibraryGeneratorValue>
+    <EnableSmartCommandLineHostingGenerator>true</EnableSmartCommandLineHostingGenerator>
   </PropertyGroup>
 
   <ItemGroup>

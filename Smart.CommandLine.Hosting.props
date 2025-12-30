@@ -1,6 +1,11 @@
 <Project>
 
+  <PropertyGroup>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Smart.CommandLine.Hosting.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
   <ItemGroup>
+    <CompilerVisibleProperty Include="EnableSmartCommandLineHostingGenerator" />
   </ItemGroup>
 
 </Project>
