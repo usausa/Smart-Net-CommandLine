@@ -141,7 +141,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
 
         var typeArgument = method.TypeArguments[0];
         var command = ExtractCommandModel(typeArgument);
-        if (command is null)
+        if ((command is null) && (containingTypeName != RootCommandBuilderFullName))
         {
             return null;
         }
@@ -455,26 +455,29 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 .NewLine();
 
             // AddCommandModel
-            builder
-                .Indent()
-                .Append("global::Smart.CommandLine.Hosting.CommandMetadataProvider.AddCommandMetadata<")
-                .Append(invocation.TypeFullName)
-                .Append(">(");
-            builder
-                .Append('"')
-                .Append(invocation.CommandInfo.Name)
-                .Append('"');
-            if (!string.IsNullOrEmpty(invocation.CommandInfo.Description))
+            if (invocation.CommandInfo is not null)
             {
                 builder
-                    .Append(", ")
+                    .Indent()
+                    .Append("global::Smart.CommandLine.Hosting.CommandMetadataProvider.AddCommandMetadata<")
+                    .Append(invocation.TypeFullName)
+                    .Append(">(");
+                builder
                     .Append('"')
-                    .Append(invocation.CommandInfo.Description!)
+                    .Append(invocation.CommandInfo.Name)
                     .Append('"');
+                if (!string.IsNullOrEmpty(invocation.CommandInfo.Description))
+                {
+                    builder
+                        .Append(", ")
+                        .Append('"')
+                        .Append(invocation.CommandInfo.Description!)
+                        .Append('"');
+                }
+                builder
+                    .Append(");")
+                    .NewLine();
             }
-            builder
-                .Append(");")
-                .NewLine();
 
             // AddFilterDescriptor
             foreach (var filter in invocation.Filters.ToArray())
