@@ -10,12 +10,13 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable IDE0032
 #pragma warning disable CA1001
 internal sealed class CommandHostBuilder : ICommandHostBuilder
 {
     private readonly string[] args;
 
-    private readonly ServiceCollection services = new();
+    private readonly ServiceCollection services = [];
 
     private readonly ConfigurationManager configuration;
 
@@ -135,7 +136,7 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
 
         // Root command
         var customRootCommand = commandBuilder.GetCustomRootCommand();
-        var rootCommand = customRootCommand ?? new RootCommand();
+        var rootCommand = customRootCommand ?? [];
 
         var rootCommandConfiguration = commandBuilder.GetRootCommandConfiguration();
         rootCommandConfiguration?.Invoke(rootCommand);
@@ -246,7 +247,7 @@ internal sealed class CommandBuilder : ICommandBuilder
 
     private CommandDescriptor? rootDescriptor;
 
-    private readonly List<CommandDescriptor> commandDescriptors = new();
+    private readonly List<CommandDescriptor> commandDescriptors = [];
 
     private readonly FilterCollection globalFilters = new();
 
@@ -439,3 +440,4 @@ internal sealed class SubCommandBuilder : ISubCommandBuilder
 
     internal List<CommandDescriptor> GetDescriptors() => descriptors;
 }
+#pragma warning restore IDE0032

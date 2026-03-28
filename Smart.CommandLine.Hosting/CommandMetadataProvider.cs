@@ -11,7 +11,7 @@ public static class CommandMetadataProvider
     // Command info
     //--------------------------------------------------------------------------------
 
-    private static readonly Dictionary<Type, (string Name, string? Description)> CommandMetadata = new();
+    private static readonly Dictionary<Type, (string Name, string? Description)> CommandMetadata = [];
 
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static void AddCommandMetadata<TCommand>(string name, string? description = null)
@@ -35,7 +35,7 @@ public static class CommandMetadataProvider
     // Filter descriptors
     //--------------------------------------------------------------------------------
 
-    private static readonly Dictionary<Type, List<FilterDescriptor>> FilterDescriptors = new();
+    private static readonly Dictionary<Type, List<FilterDescriptor>> FilterDescriptors = [];
 
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static void AddFilterDescriptor<TTarget, TFilter>(int order)
@@ -45,7 +45,7 @@ public static class CommandMetadataProvider
         var filterType = typeof(TFilter);
         if (!FilterDescriptors.TryGetValue(targetType, out var descriptors))
         {
-            descriptors = new List<FilterDescriptor>();
+            descriptors = [];
             FilterDescriptors[targetType] = descriptors;
         }
         descriptors.Add(new FilterDescriptor(filterType, order));
@@ -58,7 +58,7 @@ public static class CommandMetadataProvider
             return descriptors;
         }
 
-        descriptors = new List<FilterDescriptor>();
+        descriptors = [];
         FilterDescriptors[type] = descriptors;
         foreach (var attribute in type.GetCustomAttributes(true))
         {
@@ -78,7 +78,7 @@ public static class CommandMetadataProvider
     // Action builder
     //--------------------------------------------------------------------------------
 
-    private static readonly Dictionary<Type, Action<CommandActionBuilderContext>> ActionBuilders = new();
+    private static readonly Dictionary<Type, Action<CommandActionBuilderContext>> ActionBuilders = [];
 
     private static readonly MethodInfo GetValueMethod = typeof(ParseResult)
         .GetMethods(BindingFlags.Public | BindingFlags.Instance)
@@ -129,10 +129,10 @@ public static class CommandMetadataProvider
                 option.Required = attribute.GetRequired();
 
                 // Set default value factory
-                var defaultValue = GetDefaultValue(property, attribute);
-                if (defaultValue.HasValue)
+                var (hasValue, value) = GetDefaultValue(property, attribute);
+                if (hasValue)
                 {
-                    SetDefaultValueFactory(option, property.PropertyType, defaultValue.Value);
+                    SetDefaultValueFactory(option, property.PropertyType, value);
                 }
 
                 // Set completion sources

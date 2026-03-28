@@ -2,6 +2,7 @@ namespace Smart.CommandLine.Hosting;
 
 using System.CommandLine;
 
+#pragma warning disable IDE0032
 internal sealed class CommandHostImplement : ICommandHost
 {
     private readonly string[] args;
@@ -37,3 +38,4 @@ internal sealed class CommandHostImplement : ICommandHost
         return ValueTask.CompletedTask;
     }
 }
+#pragma warning restore IDE0032
