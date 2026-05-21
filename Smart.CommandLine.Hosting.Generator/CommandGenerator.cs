@@ -480,7 +480,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
             }
 
             // AddFilterDescriptor
-            foreach (var filter in invocation.Filters.ToArray())
+            foreach (var filter in invocation.Filters.AsArray())
             {
                 builder
                     .Indent()
@@ -513,7 +513,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
 
     private static void GenerateActionBuilder(SourceBuilder builder, InvocationModel invocation)
     {
-        var options = invocation.Options.ToArray();
+        var options = invocation.Options.AsArray();
         var sortedOptions = options.Length > 0
             ? options.OrderBy(static x => x.Order).ThenBy(static x => x.HierarchyLevel).ThenBy(static x => x.PropertyIndex).ToList()
             : [];
@@ -547,7 +547,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 .Append("\"");
 
             // Add aliases
-            var aliases = option.Aliases.ToArray();
+            var aliases = option.Aliases.AsArray();
             if (aliases.Length > 0)
             {
                 foreach (var alias in aliases)
@@ -598,7 +598,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
             }
 
             // Set completions
-            var completions = option.Completions.ToArray();
+            var completions = option.Completions.AsArray();
             if (completions.Length > 0)
             {
                 builder
