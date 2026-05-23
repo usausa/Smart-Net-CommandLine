@@ -1,5 +1,7 @@
 namespace Smart.CommandLine.Hosting;
 
+using System.Diagnostics.CodeAnalysis;
+
 #pragma warning disable CA1711
 internal sealed class FilterCollection
 {
@@ -12,6 +14,7 @@ internal sealed class FilterCollection
         Descriptors.Add(new FilterDescriptor(typeof(TFilter), order));
     }
 
+    [RequiresUnreferencedCode("Type-based filter registration may not be preserved by the trimmer. Use Add<TFilter>() instead.")]
     public void Add(Type filterType, int order = 0)
     {
         if (!typeof(ICommandFilter).IsAssignableFrom(filterType))

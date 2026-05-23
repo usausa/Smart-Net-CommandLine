@@ -1,6 +1,7 @@
 namespace Smart.CommandLine.Hosting;
 
 using System.CommandLine;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 using Microsoft.Extensions.Configuration;
@@ -89,6 +90,8 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         return this;
     }
 
+    [RequiresUnreferencedCode("Uses reflection fallback when Source Generator is not applied. Use Source Generator for AOT compatibility.")]
+    [RequiresDynamicCode("Uses reflection fallback. Use Source Generator to avoid this.")]
     public ICommandHost Build()
     {
         // Execute command configuration
@@ -156,6 +159,8 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         return new CommandHostImplement(args, rootCommand, serviceProvider);
     }
 
+    [RequiresUnreferencedCode("Uses reflection fallback when Source Generator is not applied.")]
+    [RequiresDynamicCode("Uses reflection fallback. Use Source Generator to avoid this.")]
     private static Command CreateCommand(IServiceProvider serviceProvider, FilterCollection globalFilters, CommandDescriptor descriptor)
     {
         // Create command
@@ -178,6 +183,8 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         return command;
     }
 
+    [RequiresUnreferencedCode("Uses reflection fallback when Source Generator is not applied.")]
+    [RequiresDynamicCode("Uses reflection fallback. Use Source Generator to avoid this.")]
     private static void SetupCommandHandler(IServiceProvider serviceProvider, FilterCollection globalFilters, Command command, CommandDescriptor descriptor)
     {
         // Build command

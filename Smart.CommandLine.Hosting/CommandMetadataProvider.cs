@@ -3,6 +3,7 @@ namespace Smart.CommandLine.Hosting;
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 public static class CommandMetadataProvider
@@ -20,6 +21,7 @@ public static class CommandMetadataProvider
         CommandMetadata[commandType] = (name, description);
     }
 
+    [RequiresUnreferencedCode("Reflection fallback is used when Source Generator is not applied. Use Source Generator to avoid this.")]
     internal static (string Name, string? Description) ResolveCommandMetadata(Type type)
     {
         if (CommandMetadata.TryGetValue(type, out var data))
@@ -51,6 +53,7 @@ public static class CommandMetadataProvider
         descriptors.Add(new FilterDescriptor(filterType, order));
     }
 
+    [RequiresUnreferencedCode("Reflection fallback is used when Source Generator is not applied. Use Source Generator to avoid this.")]
     internal static IReadOnlyList<FilterDescriptor> GetFilterDescriptors(Type type)
     {
         if (FilterDescriptors.TryGetValue(type, out var descriptors))
@@ -80,13 +83,6 @@ public static class CommandMetadataProvider
 
     private static readonly Dictionary<Type, Action<CommandActionBuilderContext>> ActionBuilders = [];
 
-    private static readonly MethodInfo GetValueMethod = typeof(ParseResult)
-        .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-        .First(x => x is { Name: nameof(ParseResult.GetValue), IsGenericMethodDefinition: true } &&
-                    (x.GetParameters().Length == 1) &&
-                    x.GetParameters()[0].ParameterType.IsGenericType &&
-                    x.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Option<>));
-
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static void AddActionBuilder<TCommand>(Action<CommandActionBuilderContext> builder)
     {
@@ -94,6 +90,8 @@ public static class CommandMetadataProvider
         ActionBuilders[commandType] = builder;
     }
 
+    [RequiresUnreferencedCode("Reflection fallback is used when Source Generator is not applied. Use Source Generator to avoid this.")]
+    [RequiresDynamicCode("Reflection fallback uses MakeGenericType/MakeGenericMethod. Use Source Generator to avoid this.")]
     internal static Action<CommandActionBuilderContext> ResolveActionBuilder(Type type)
     {
         if (ActionBuilders.TryGetValue(type, out var builder))
@@ -105,6 +103,8 @@ public static class CommandMetadataProvider
         return CreateReflectionBasedDelegate(type);
     }
 
+    [RequiresUnreferencedCode("Reflection fallback uses GetCustomAttribute, GetProperties, Activator.CreateInstance, etc. Use Source Generator to avoid this.")]
+    [RequiresDynamicCode("Reflection fallback uses MakeGenericType/MakeGenericMethod. Use Source Generator to avoid this.")]
     private static Action<CommandActionBuilderContext> CreateReflectionBasedDelegate(Type type)
     {
         return context =>
@@ -163,6 +163,7 @@ public static class CommandMetadataProvider
         };
     }
 
+    [RequiresUnreferencedCode("Uses GetProperties with reflection.")]
     private static IEnumerable<(PropertyInfo Property, IOptionAttribute Attribute)> EnumerableTargetProperties(Type type)
     {
         var propertiesWithMetadata = new List<(PropertyInfo Property, IOptionAttribute Attribute, int TypeLevel, int Order, int PropertyIndex)>();
@@ -205,6 +206,7 @@ public static class CommandMetadataProvider
         return propertiesWithMetadata.Select(static x => (x.Property, x.Attribute));
     }
 
+    [RequiresUnreferencedCode("Uses Activator.CreateInstance for value type default values.")]
     private static (bool HasValue, object? Value) GetDefaultValue(PropertyInfo property, IOptionAttribute attribute)
     {
         var defaultValue = attribute.GetDefaultValue();
@@ -222,6 +224,8 @@ public static class CommandMetadataProvider
         return (false, null);
     }
 
+    [RequiresUnreferencedCode("Uses GetProperty and MakeGenericMethod with reflection.")]
+    [RequiresDynamicCode("Uses MakeGenericMethod at runtime.")]
     private static void SetDefaultValueFactory(Option option, Type propertyType, object? value)
     {
         var defaultValueFactoryProperty = option.GetType().GetProperty(nameof(Option<>.DefaultValueFactory));
@@ -244,6 +248,7 @@ public static class CommandMetadataProvider
         return _ => (T)value!;
     }
 
+    [RequiresUnreferencedCode("Uses GetProperty/GetMethod with reflection.")]
     private static void SetCompletionSources(Option option, string[] completions)
     {
         if (completions.Length == 0)
@@ -262,9 +267,17 @@ public static class CommandMetadataProvider
         addMethod?.Invoke(completionSources, [completions]);
     }
 
+    [RequiresUnreferencedCode("Uses GetMethods and MakeGenericMethod with reflection.")]
+    [RequiresDynamicCode("Uses MakeGenericMethod at runtime.")]
     private static void SetOptionValue(ICommandHandler handler, ParseResult parseResult, PropertyInfo property, Option option)
     {
-        var genericMethod = GetValueMethod.MakeGenericMethod(property.PropertyType);
+        var getValueMethod = typeof(ParseResult)
+            .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .First(x => x is { Name: nameof(ParseResult.GetValue), IsGenericMethodDefinition: true } &&
+                        (x.GetParameters().Length == 1) &&
+                        x.GetParameters()[0].ParameterType.IsGenericType &&
+                        x.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Option<>));
+        var genericMethod = getValueMethod.MakeGenericMethod(property.PropertyType);
 
         // Invoke and set value
         var value = genericMethod.Invoke(parseResult, [option]);

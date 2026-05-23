@@ -1,5 +1,7 @@
 namespace Smart.CommandLine.Hosting;
 
+using System.Diagnostics.CodeAnalysis;
+
 internal sealed class FilterPipeline
 {
     private readonly IServiceProvider serviceProvider;
@@ -12,6 +14,8 @@ internal sealed class FilterPipeline
         this.globalFilters = globalFilters;
     }
 
+    [RequiresUnreferencedCode("Uses reflection fallback for filter descriptors when Source Generator is not applied.")]
+    [RequiresDynamicCode("Uses reflection fallback. Use Source Generator to avoid this.")]
     public ValueTask ExecuteAsync(CommandContext context, Func<CommandContext, ValueTask> action)
     {
         // Collect filters

@@ -25,6 +25,8 @@ public interface ICommandHostBuilder
 
     ICommandHostBuilder ConfigureCommands(Action<ICommandBuilder> configure);
 
+    [RequiresUnreferencedCode("Uses reflection fallback when Source Generator is not applied. Use Source Generator for AOT compatibility.")]
+    [RequiresDynamicCode("Uses reflection fallback. Use Source Generator to avoid this.")]
     ICommandHost Build();
 }
 
