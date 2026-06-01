@@ -466,7 +466,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
                     .Append('"')
                     .Append(invocation.CommandInfo.Name)
                     .Append('"');
-                if (!string.IsNullOrEmpty(invocation.CommandInfo.Description))
+                if (!String.IsNullOrEmpty(invocation.CommandInfo.Description))
                 {
                     builder
                         .Append(", ")
@@ -564,7 +564,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 .NewLine();
 
             // Set description
-            if (!string.IsNullOrEmpty(option.Description))
+            if (!String.IsNullOrEmpty(option.Description))
             {
                 builder
                     .Indent()
