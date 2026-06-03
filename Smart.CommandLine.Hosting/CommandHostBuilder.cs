@@ -90,8 +90,8 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         return this;
     }
 
-    [RequiresUnreferencedCode("Uses reflection fallback when Source Generator is not applied. Use Source Generator for AOT compatibility.")]
-    [RequiresDynamicCode("Uses reflection fallback. Use Source Generator to avoid this.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Source Generator populates metadata via ModuleInitializer before Build() is called. Reflection fallback is never reached.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Source Generator populates metadata via ModuleInitializer before Build() is called. Reflection fallback is never reached.")]
     public ICommandHost Build()
     {
         // Execute command configuration
@@ -159,8 +159,8 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         return new CommandHostImplement(args, rootCommand, serviceProvider);
     }
 
-    [RequiresUnreferencedCode("Uses reflection fallback when Source Generator is not applied.")]
-    [RequiresDynamicCode("Uses reflection fallback. Use Source Generator to avoid this.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Source Generator populates metadata via ModuleInitializer before Build() is called. Reflection fallback is never reached.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Source Generator populates metadata via ModuleInitializer before Build() is called. Reflection fallback is never reached.")]
     private static Command CreateCommand(IServiceProvider serviceProvider, FilterCollection globalFilters, CommandDescriptor descriptor)
     {
         // Create command
@@ -183,8 +183,8 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         return command;
     }
 
-    [RequiresUnreferencedCode("Uses reflection fallback when Source Generator is not applied.")]
-    [RequiresDynamicCode("Uses reflection fallback. Use Source Generator to avoid this.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Source Generator populates metadata via ModuleInitializer before Build() is called. Reflection fallback is never reached.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Source Generator populates metadata via ModuleInitializer before Build() is called. Reflection fallback is never reached.")]
     private static void SetupCommandHandler(IServiceProvider serviceProvider, FilterCollection globalFilters, Command command, CommandDescriptor descriptor)
     {
         // Build command
