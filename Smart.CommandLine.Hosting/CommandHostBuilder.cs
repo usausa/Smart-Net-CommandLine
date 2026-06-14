@@ -156,7 +156,7 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
             rootCommand.Subcommands.Add(command);
         }
 
-        return new CommandHostImplement(args, rootCommand, serviceProvider);
+        return new CommandHostImplement(args, rootCommand, serviceProvider, configuration, environment);
     }
 
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Source Generator populates metadata via ModuleInitializer before Build() is called. Reflection fallback is never reached.")]

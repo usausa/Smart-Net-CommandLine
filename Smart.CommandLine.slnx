@@ -19,5 +19,6 @@
     <BuildDependency Project="Smart.CommandLine.Hosting.Generator/Smart.CommandLine.Hosting.Generator.csproj" />
   </Project>
   <Project Path="Smart.CommandLine.Hosting.Generator/Smart.CommandLine.Hosting.Generator.csproj" />
+  <Project Path="Smart.CommandLine.Hosting.Generator.Tests/Smart.CommandLine.Hosting.Generator.Tests.csproj" />
   <Project Path="Smart.CommandLine.Hosting.Tests/Smart.CommandLine.Hosting.Tests.csproj" />
 </Solution>

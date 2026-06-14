@@ -119,7 +119,7 @@ public sealed class FilterPipelineTests
     //--------------------------------------------------------------------------------
 
     [Fact]
-    public async Task ExecuteAsync_WithoutFilters_ExecutesActionDirectly()
+    public async Task ExecuteAsyncWithoutFiltersExecutesActionDirectly()
     {
         // Arrange
         var globalFilters = new FilterCollection();
@@ -137,7 +137,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithGlobalFilter_AppliesFilter()
+    public async Task ExecuteAsyncWithGlobalFilterAppliesFilter()
     {
         // Arrange
         var log = new List<string>();
@@ -168,7 +168,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithCommandFilter_AppliesFilter()
+    public async Task ExecuteAsyncWithCommandFilterAppliesFilter()
     {
         // Arrange
         var log = new List<string>();
@@ -195,7 +195,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithMultipleFilters_ExecutesInOrderByOrder()
+    public async Task ExecuteAsyncWithMultipleFiltersExecutesInOrderByOrder()
     {
         // Arrange
         var log = new List<string>();
@@ -227,7 +227,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithGlobalAndCommandFilters_CombinesBoth()
+    public async Task ExecuteAsyncWithGlobalAndCommandFiltersCombinesBoth()
     {
         // Arrange
         var log = new List<string>();
@@ -263,7 +263,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_OrderSorting_ExecutesFiltersInCorrectOrder()
+    public async Task ExecuteAsyncOrderSortingExecutesFiltersInCorrectOrder()
     {
         // Arrange
         var log = new List<string>();
@@ -298,7 +298,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_FilterCanModifyExitCode()
+    public async Task ExecuteAsyncFilterCanModifyExitCode()
     {
         // Arrange
         var globalFilters = new FilterCollection();
@@ -320,7 +320,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_FilterCanShortCircuit()
+    public async Task ExecuteAsyncFilterCanShortCircuit()
     {
         // Arrange
         var globalFilters = new FilterCollection();
@@ -343,7 +343,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithMissingFilterInServiceProvider_SkipsFilter()
+    public async Task ExecuteAsyncWithMissingFilterInServiceProviderSkipsFilter()
     {
         // Arrange
         var globalFilters = new FilterCollection();
@@ -364,7 +364,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_MultipleFiltersWithSameOrder_MaintainsStableOrder()
+    public async Task ExecuteAsyncMultipleFiltersWithSameOrderMaintainsStableOrder()
     {
         // Arrange
         var log = new List<string>();
@@ -411,7 +411,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_FilterCanAccessContextItems()
+    public async Task ExecuteAsyncFilterCanAccessContextItems()
     {
         // Arrange
         var log = new List<string>();
@@ -440,7 +440,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithZeroOrderFilters_ExecutesCorrectly()
+    public async Task ExecuteAsyncWithZeroOrderFiltersExecutesCorrectly()
     {
         // Arrange
         var log = new List<string>();
@@ -471,7 +471,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithNegativeOrderFilters_ExecutesInCorrectOrder()
+    public async Task ExecuteAsyncWithNegativeOrderFiltersExecutesInCorrectOrder()
     {
         // Arrange
         var log = new List<string>();

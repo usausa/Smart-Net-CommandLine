@@ -133,7 +133,7 @@ public sealed class CommandMetadataProviderTests
     //--------------------------------------------------------------------------------
 
     [Fact]
-    public void ResolveActionBuilder_WithSimpleCommand_CreatesValidDelegate()
+    public void ResolveActionBuilderWithSimpleCommandCreatesValidDelegate()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -152,7 +152,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_AddsOptionsWithCorrectNames()
+    public void ResolveActionBuilderAddsOptionsWithCorrectNames()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -171,7 +171,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithDescription_SetsDescriptionProperty()
+    public void ResolveActionBuilderWithDescriptionSetsDescriptionProperty()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -189,7 +189,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithAliases_AddsAllAliases()
+    public void ResolveActionBuilderWithAliasesAddsAllAliases()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -208,7 +208,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithDefaultValue_SetsDefaultValueFactory()
+    public void ResolveActionBuilderWithDefaultValueSetsDefaultValueFactory()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -226,7 +226,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithMultipleOptions_AddsAllOptions()
+    public void ResolveActionBuilderWithMultipleOptionsAddsAllOptions()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -245,7 +245,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithNullableType_AddsOption()
+    public void ResolveActionBuilderWithNullableTypeAddsOption()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -262,7 +262,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithoutOptions_DoesNotAddOptions()
+    public void ResolveActionBuilderWithoutOptionsDoesNotAddOptions()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -279,7 +279,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_ExecutesCommand()
+    public async Task ResolveActionBuilderOperationExecutesCommand()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -303,7 +303,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_SetsPropertyValues()
+    public async Task ResolveActionBuilderOperationSetsPropertyValues()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -335,7 +335,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithDefaultValues_UsesDefaults()
+    public async Task ResolveActionBuilderOperationWithDefaultValuesUsesDefaults()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -366,7 +366,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithPartialValues_UsesProvidedAndDefaults()
+    public async Task ResolveActionBuilderOperationWithPartialValuesUsesProvidedAndDefaults()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -397,7 +397,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithAliases_ParsesCorrectly()
+    public async Task ResolveActionBuilderOperationWithAliasesParsesCorrectly()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -425,7 +425,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithBooleanOption_ParsesCorrectly()
+    public async Task ResolveActionBuilderOperationWithBooleanOptionParsesCorrectly()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -453,7 +453,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithNonICommandType_CreatesDelegate()
+    public void ResolveActionBuilderWithNonICommandTypeCreatesDelegate()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -470,7 +470,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithRequiredOption_AddsOption()
+    public void ResolveActionBuilderWithRequiredOptionAddsOption()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -487,7 +487,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_SetsOperationInContext()
+    public void ResolveActionBuilderSetsOperationInContext()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -503,7 +503,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithMultipleOptions_SetsAllProperties()
+    public async Task ResolveActionBuilderOperationWithMultipleOptionsSetsAllProperties()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -537,7 +537,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithNullableType_SetsValue()
+    public async Task ResolveActionBuilderOperationWithNullableTypeSetsValue()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -563,7 +563,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithNullableType_WithoutValue_SetsNull()
+    public async Task ResolveActionBuilderOperationWithNullableTypeWithoutValueSetsNull()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -591,7 +591,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithCompletions_AddsOption()
+    public void ResolveActionBuilderWithCompletionsAddsOption()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -610,7 +610,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithCompletions_AcceptsAnyValue()
+    public async Task ResolveActionBuilderOperationWithCompletionsAcceptsAnyValue()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -636,7 +636,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithGenericCompletions_AddsOption()
+    public void ResolveActionBuilderWithGenericCompletionsAddsOption()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -655,7 +655,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithGenericCompletions_SetsValue()
+    public async Task ResolveActionBuilderOperationWithGenericCompletionsSetsValue()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -681,7 +681,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public void ResolveActionBuilder_WithIntCompletions_AddsOption()
+    public void ResolveActionBuilderWithIntCompletionsAddsOption()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -700,7 +700,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithIntCompletions_SetsValue()
+    public async Task ResolveActionBuilderOperationWithIntCompletionsSetsValue()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -726,7 +726,7 @@ public sealed class CommandMetadataProviderTests
     }
 
     [Fact]
-    public async Task ResolveActionBuilder_Operation_WithCompletions_AcceptsValueNotInList()
+    public async Task ResolveActionBuilderOperationWithCompletionsAcceptsValueNotInList()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
