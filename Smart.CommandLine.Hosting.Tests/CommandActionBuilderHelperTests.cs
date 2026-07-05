@@ -750,4 +750,13 @@ public sealed class CommandMetadataProviderTests
         Assert.Equal("csv", parseResult.GetValue(formatOption));
         Assert.Equal("csv", commandInstance.Format);
     }
+
+    [Fact]
+    public void ResolveCommandMetadataWithoutCommandAttributeThrowsInvalidOperationException()
+    {
+        // Act & Assert - a type without [Command] must give a clear error instead of a NullReferenceException
+        var exception = Assert.Throws<InvalidOperationException>(
+            static () => { _ = CommandMetadataProvider.ResolveCommandMetadata(typeof(NonICommandType)); });
+        Assert.Contains("[Command]", exception.Message, StringComparison.Ordinal);
+    }
 }

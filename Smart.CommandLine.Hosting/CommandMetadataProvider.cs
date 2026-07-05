@@ -30,7 +30,12 @@ public static class CommandMetadataProvider
             return data;
         }
 
-        var attribute = type.GetCustomAttribute<CommandAttribute>()!;
+        var attribute = type.GetCustomAttribute<CommandAttribute>();
+        if (attribute is null)
+        {
+            throw new InvalidOperationException($"Type must be annotated with the [Command] attribute to be used as a command. type=['{type.FullName}]");
+        }
+
         return (attribute.Name, attribute.Description);
     }
 
