@@ -831,4 +831,176 @@ public class CommandGeneratorTests
         // Assert
         Assert.Null(result.GeneratedSource);
     }
+
+    //--------------------------------------------------------------------------------
+    // String escaping
+    //--------------------------------------------------------------------------------
+
+    [Fact]
+    public void GenerateEscapesSpecialCharactersSoOutputCompiles()
+    {
+        // Arrange - command/option strings contain quotes, backslashes and a newline
+        const string source =
+            """"
+            using System.Threading.Tasks;
+            using Smart.CommandLine.Hosting;
+
+            namespace TestApp;
+
+            [Command("say", "desc with \"quote\", backslash \\ and\nnewline")]
+            public sealed class SayCommand : ICommandHandler
+            {
+                [Option<string>("--path", "-p", Description = "path \"a\\b\"", Completions = ["a\"b", "c\\d"])]
+                public string Path { get; set; } = default!;
+
+                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+            }
+
+            public static class Program
+            {
+                public static void Main(string[] args)
+                {
+                    var builder = CommandHost.CreateBuilder(args);
+                    builder.ConfigureCommands(static commands => commands.AddCommand<SayCommand>());
+                    _ = builder.Build();
+                }
+            }
+            """";
+
+        // Act
+        var result = GeneratorTestHelper.RunGenerator(source);
+
+        // Assert - the generated code must be valid (previously the raw values broke the literals)
+        Assert.NotNull(result.GeneratedSource);
+        Assert.Empty(result.GeneratorDiagnostics);
+        Assert.Empty(result.CompilationErrors);
+    }
+
+    //--------------------------------------------------------------------------------
+    // Property extraction condition
+    //--------------------------------------------------------------------------------
+
+    [Fact]
+    public void GenerateIgnoresNonBindablePropertiesWithOption()
+    {
+        // Arrange - static/private/get-only/init/indexer options must be ignored (like the runtime)
+        const string source =
+            """
+            using System.Threading.Tasks;
+            using Smart.CommandLine.Hosting;
+
+            namespace TestApp;
+
+            [Command("foo", "Foo command")]
+            public sealed class FooCommand : ICommandHandler
+            {
+                [Option<string>("--static-opt")]
+                public static string StaticProp { get; set; } = default!;
+
+                [Option<string>("--private-opt")]
+                private string PrivateProp { get; set; } = default!;
+
+                [Option<string>("--getonly-opt")]
+                public string GetOnlyProp { get; } = default!;
+
+                [Option<string>("--init-opt")]
+                public string InitProp { get; init; } = default!;
+
+                [Option<string>("--indexer-opt")]
+                public string this[int index] { get => string.Empty; set { } }
+
+                [Option<string>("--normal-opt")]
+                public string NormalProp { get; set; } = default!;
+
+                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+            }
+
+            public static class Program
+            {
+                public static void Main(string[] args)
+                {
+                    var builder = CommandHost.CreateBuilder(args);
+                    builder.ConfigureCommands(static commands => commands.AddCommand<FooCommand>());
+                    _ = builder.Build();
+                }
+            }
+            """;
+
+        // Act
+        var result = GeneratorTestHelper.RunGenerator(source);
+
+        // Assert - only the normal property is bound and the output compiles
+        Assert.NotNull(result.GeneratedSource);
+        Assert.Contains("\"--normal-opt\"", result.GeneratedSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"--static-opt\"", result.GeneratedSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"--private-opt\"", result.GeneratedSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"--getonly-opt\"", result.GeneratedSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"--init-opt\"", result.GeneratedSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"--indexer-opt\"", result.GeneratedSource, StringComparison.Ordinal);
+        Assert.Empty(result.CompilationErrors);
+    }
+
+    //--------------------------------------------------------------------------------
+    // Duplicate registration
+    //--------------------------------------------------------------------------------
+
+    [Fact]
+    public void GenerateDuplicateRegistrationEmitsFilterDescriptorOnce()
+    {
+        // Arrange - the same command type is registered from two call sites
+        const string source =
+            """
+            using System.Threading.Tasks;
+            using Smart.CommandLine.Hosting;
+
+            namespace TestApp;
+
+            public sealed class LoggingFilter : ICommandFilter
+            {
+                public ValueTask ExecuteAsync(CommandContext context, CommandDelegate next) => next(context);
+            }
+
+            [Command("foo", "Foo command")]
+            [Filter<LoggingFilter>]
+            public sealed class FooCommand : ICommandHandler
+            {
+                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+            }
+
+            public static class Program
+            {
+                public static void Main(string[] args)
+                {
+                    var builder = CommandHost.CreateBuilder(args);
+                    builder.ConfigureCommands(static commands => commands.AddCommand<FooCommand>());
+                    builder.ConfigureCommands(static commands => commands.AddCommand<FooCommand>());
+                    _ = builder.Build();
+                }
+            }
+            """;
+
+        // Act
+        var result = GeneratorTestHelper.RunGenerator(source);
+
+        // Assert - the filter descriptor is registered only once despite the duplicate call sites
+        Assert.NotNull(result.GeneratedSource);
+        var occurrences = CountOccurrences(
+            result.GeneratedSource!,
+            "AddFilterDescriptor<global::TestApp.FooCommand, global::TestApp.LoggingFilter>(0);");
+        Assert.Equal(1, occurrences);
+        Assert.Empty(result.CompilationErrors);
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += value.Length;
+        }
+
+        return count;
+    }
 }

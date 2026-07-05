@@ -178,11 +178,11 @@ public sealed class FilterCommand : ICommandHandler
 
     public async ValueTask ExecuteAsync(CommandContext context)
     {
-        await Task.Delay(50);
+        await Task.Delay(50, context.CancellationToken);
 
         log.LogInformation("Message: {Message}", Message);
 
-        await Task.Delay(50);
+        await Task.Delay(50, context.CancellationToken);
     }
 }
 

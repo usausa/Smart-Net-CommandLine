@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
@@ -250,6 +251,15 @@ public sealed class CommandGenerator : IIncrementalGenerator
                     continue;
                 }
 
+                // Skip properties that cannot be assigned from generated code
+                if (property.IsStatic ||
+                    property.IsIndexer ||
+                    (property.DeclaredAccessibility != Accessibility.Public) ||
+                    property.SetMethod is not { DeclaredAccessibility: Accessibility.Public, IsInitOnly: false })
+                {
+                    continue;
+                }
+
                 foreach (var attribute in property.GetAttributes())
                 {
                     if (attribute.AttributeClass is null)
@@ -446,8 +456,14 @@ public sealed class CommandGenerator : IIncrementalGenerator
         builder.BeginScope();
 
         // Generate metadata registration for each invocation
+        var registeredTypes = new HashSet<string>(StringComparer.Ordinal);
         foreach (var invocation in invocations)
         {
+            if (!registeredTypes.Add(invocation.TypeFullName))
+            {
+                continue;
+            }
+
             builder
                 .Indent()
                 .Append("// ")
@@ -462,17 +478,12 @@ public sealed class CommandGenerator : IIncrementalGenerator
                     .Append("global::Smart.CommandLine.Hosting.CommandMetadataProvider.AddCommandMetadata<")
                     .Append(invocation.TypeFullName)
                     .Append(">(");
-                builder
-                    .Append('"')
-                    .Append(invocation.CommandInfo.Name)
-                    .Append('"');
+                builder.Append(ToStringLiteral(invocation.CommandInfo.Name));
                 if (!String.IsNullOrEmpty(invocation.CommandInfo.Description))
                 {
                     builder
                         .Append(", ")
-                        .Append('"')
-                        .Append(invocation.CommandInfo.Description!)
-                        .Append('"');
+                        .Append(ToStringLiteral(invocation.CommandInfo.Description!));
                 }
                 builder
                     .Append(");")
@@ -533,7 +544,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
         // Generate option variables
         for (var i = 0; i < sortedOptions.Count; i++)
         {
-            var option = sortedOptions[i];
+            var (_, propertyType, _, _, _, name, aliases, description, required, defaultValue, completions) = sortedOptions[i];
             var optionVar = $"option{i}";
 
             builder
@@ -541,21 +552,18 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 .Append("var ")
                 .Append(optionVar)
                 .Append(" = new global::System.CommandLine.Option<")
-                .Append(option.PropertyType)
-                .Append(">(\"")
-                .Append(option.Name)
-                .Append("\"");
+                .Append(propertyType)
+                .Append(">(")
+                .Append(ToStringLiteral(name));
 
             // Add aliases
-            var aliases = option.Aliases;
             if (aliases.Count > 0)
             {
                 foreach (var alias in aliases)
                 {
                     builder
-                        .Append(", \"")
-                        .Append(alias)
-                        .Append("\"");
+                        .Append(", ")
+                        .Append(ToStringLiteral(alias));
                 }
             }
 
@@ -564,19 +572,19 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 .NewLine();
 
             // Set description
-            if (!String.IsNullOrEmpty(option.Description))
+            if (!String.IsNullOrEmpty(description))
             {
                 builder
                     .Indent()
                     .Append(optionVar)
-                    .Append(".Description = \"")
-                    .Append(option.Description!)
-                    .Append("\";")
+                    .Append(".Description = ")
+                    .Append(ToStringLiteral(description!))
+                    .Append(";")
                     .NewLine();
             }
 
             // Set required
-            if (option.Required)
+            if (required)
             {
                 builder
                     .Indent()
@@ -586,19 +594,18 @@ public sealed class CommandGenerator : IIncrementalGenerator
             }
 
             // Set default value
-            if (option.DefaultValue is not null)
+            if (defaultValue is not null)
             {
                 builder
                     .Indent()
                     .Append(optionVar)
                     .Append(".DefaultValueFactory = static _ => ")
-                    .Append(option.DefaultValue)
+                    .Append(defaultValue)
                     .Append(";")
                     .NewLine();
             }
 
             // Set completions
-            var completions = option.Completions;
             if (completions.Count > 0)
             {
                 builder
@@ -609,9 +616,8 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 foreach (var completion in completions)
                 {
                     builder
-                        .Append(", \"")
-                        .Append(completion)
-                        .Append("\"");
+                        .Append(", ")
+                        .Append(ToStringLiteral(completion));
                 }
                 builder
                     .Append(");")
@@ -691,4 +697,6 @@ public sealed class CommandGenerator : IIncrementalGenerator
             .Append("});")
             .NewLine();
     }
+
+    private static string ToStringLiteral(string value) => SymbolDisplay.FormatLiteral(value, quote: true);
 }

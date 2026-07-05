@@ -200,7 +200,8 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
         }
 
         // Set action
-        var filterPipeline = new FilterPipeline(serviceProvider, globalFilters);
+        var filterDescriptors = FilterPipeline.BuildDescriptors(globalFilters, descriptor.CommandType);
+        var filterPipeline = new FilterPipeline(serviceProvider, filterDescriptors);
 
         command.SetAction(async (parseResult, token) =>
         {

@@ -1,5 +1,6 @@
 namespace Smart.CommandLine.Hosting;
 
+using System.Collections.Concurrent;
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
@@ -12,7 +13,7 @@ public static class CommandMetadataProvider
     // Command info
     //--------------------------------------------------------------------------------
 
-    private static readonly Dictionary<Type, (string Name, string? Description)> CommandMetadata = [];
+    private static readonly ConcurrentDictionary<Type, (string Name, string? Description)> CommandMetadata = new();
 
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static void AddCommandMetadata<TCommand>(string name, string? description = null)
@@ -37,32 +38,27 @@ public static class CommandMetadataProvider
     // Filter descriptors
     //--------------------------------------------------------------------------------
 
-    private static readonly Dictionary<Type, List<FilterDescriptor>> FilterDescriptors = [];
+    private static readonly ConcurrentDictionary<Type, List<FilterDescriptor>> FilterDescriptors = new();
 
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static void AddFilterDescriptor<TTarget, TFilter>(int order)
         where TFilter : class, ICommandFilter
     {
-        var targetType = typeof(TTarget);
-        var filterType = typeof(TFilter);
-        if (!FilterDescriptors.TryGetValue(targetType, out var descriptors))
+        var descriptors = FilterDescriptors.GetOrAdd(typeof(TTarget), static _ => []);
+        lock (descriptors)
         {
-            descriptors = [];
-            FilterDescriptors[targetType] = descriptors;
+            descriptors.Add(new FilterDescriptor(typeof(TFilter), order));
         }
-        descriptors.Add(new FilterDescriptor(filterType, order));
     }
 
     [RequiresUnreferencedCode("Reflection fallback is used when Source Generator is not applied. Use Source Generator to avoid this.")]
-    internal static IReadOnlyList<FilterDescriptor> GetFilterDescriptors(Type type)
-    {
-        if (FilterDescriptors.TryGetValue(type, out var descriptors))
-        {
-            return descriptors;
-        }
+    internal static IReadOnlyList<FilterDescriptor> GetFilterDescriptors(Type type) =>
+        FilterDescriptors.GetOrAdd(type, BuildFilterDescriptors);
 
-        descriptors = [];
-        FilterDescriptors[type] = descriptors;
+    [RequiresUnreferencedCode("Reflection fallback is used when Source Generator is not applied. Use Source Generator to avoid this.")]
+    private static List<FilterDescriptor> BuildFilterDescriptors(Type type)
+    {
+        var descriptors = new List<FilterDescriptor>();
         foreach (var attribute in type.GetCustomAttributes(true))
         {
             var attributeType = attribute.GetType();
@@ -81,7 +77,7 @@ public static class CommandMetadataProvider
     // Action builder
     //--------------------------------------------------------------------------------
 
-    private static readonly Dictionary<Type, Action<CommandActionBuilderContext>> ActionBuilders = [];
+    private static readonly ConcurrentDictionary<Type, Action<CommandActionBuilderContext>> ActionBuilders = new();
 
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static void AddActionBuilder<TCommand>(Action<CommandActionBuilderContext> builder)
@@ -109,7 +105,10 @@ public static class CommandMetadataProvider
     {
         return context =>
         {
-            var propertyArguments = new List<(PropertyInfo, Option)>();
+            // Resolve the generic ParseResult.GetValue<T>(Option<T>) definition once per command type.
+            var getValueDefinition = ResolveParseResultGetValueMethod();
+
+            var propertyArguments = new List<(PropertyInfo Property, Option Option, MethodInfo GetValue)>();
 
             // Add option
             foreach (var (property, attribute) in EnumerableTargetProperties(type))
@@ -145,16 +144,19 @@ public static class CommandMetadataProvider
                 // Add to context
                 context.AddOption(option);
 
-                propertyArguments.Add((property, option));
+                // Pre-build the closed generic getter so it is not resolved on every execution.
+                var getValue = getValueDefinition.MakeGenericMethod(property.PropertyType);
+                propertyArguments.Add((property, option, getValue));
             }
 
             // Build operation
             context.Operation = (command, parseResult, commandContext) =>
             {
                 // Set property values
-                foreach (var (property, option) in propertyArguments)
+                foreach (var (property, option, getValue) in propertyArguments)
                 {
-                    SetOptionValue(command, parseResult, property, option);
+                    var value = getValue.Invoke(parseResult, [option]);
+                    property.SetValue(command, value);
                 }
 
                 // Execute command
@@ -176,6 +178,12 @@ public static class CommandMetadataProvider
             for (var i = 0; i < properties.Length; i++)
             {
                 var property = properties[i];
+
+                if ((property.GetIndexParameters().Length > 0) || (property.SetMethod is not { IsPublic: true }))
+                {
+                    continue;
+                }
+
                 if (property.GetCustomAttribute<BaseOptionAttribute>() is IOptionAttribute attribute)
                 {
                     propertiesWithMetadata.Add((property, attribute, currentLevel, attribute.GetOrder(), i));
@@ -267,20 +275,12 @@ public static class CommandMetadataProvider
         addMethod?.Invoke(completionSources, [completions]);
     }
 
-    [RequiresUnreferencedCode("Uses GetMethods and MakeGenericMethod with reflection.")]
-    [RequiresDynamicCode("Uses MakeGenericMethod at runtime.")]
-    private static void SetOptionValue(ICommandHandler handler, ParseResult parseResult, PropertyInfo property, Option option)
-    {
-        var getValueMethod = typeof(ParseResult)
+    [RequiresUnreferencedCode("Uses GetMethods with reflection.")]
+    private static MethodInfo ResolveParseResultGetValueMethod() =>
+        typeof(ParseResult)
             .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .First(x => x is { Name: nameof(ParseResult.GetValue), IsGenericMethodDefinition: true } &&
-                        (x.GetParameters().Length == 1) &&
-                        x.GetParameters()[0].ParameterType.IsGenericType &&
-                        x.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Option<>));
-        var genericMethod = getValueMethod.MakeGenericMethod(property.PropertyType);
-
-        // Invoke and set value
-        var value = genericMethod.Invoke(parseResult, [option]);
-        property.SetValue(handler, value);
-    }
+            .First(static x => x is { Name: nameof(ParseResult.GetValue), IsGenericMethodDefinition: true } &&
+                              (x.GetParameters().Length == 1) &&
+                              x.GetParameters()[0].ParameterType.IsGenericType &&
+                              (x.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Option<>)));
 }
