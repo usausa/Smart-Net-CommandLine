@@ -420,7 +420,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
     }
 
     // ------------------------------------------------------------
-    // Execute
+    // Generator
     // ------------------------------------------------------------
 
     private static void Execute(SourceProductionContext context, ImmutableArray<InvocationModel> invocations)
