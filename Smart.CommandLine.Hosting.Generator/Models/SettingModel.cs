@@ -1,4 +1,4 @@
 namespace Smart.CommandLine.Hosting.Generator.Models;
 
-internal record GeneratorSetting(
+internal sealed record SettingModel(
     bool Enable);

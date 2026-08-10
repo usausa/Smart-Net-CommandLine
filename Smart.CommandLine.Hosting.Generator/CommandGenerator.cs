@@ -80,14 +80,14 @@ public sealed class CommandGenerator : IIncrementalGenerator
     // Parser
     // ------------------------------------------------------------
 
-    private static GeneratorSetting SelectSetting(AnalyzerConfigOptionsProvider provider)
+    private static SettingModel SelectSetting(AnalyzerConfigOptionsProvider provider)
     {
         if (provider.GlobalOptions.TryGetValue(EnableInterceptorOptionName, out var value) && !String.IsNullOrEmpty(value))
         {
-            return new GeneratorSetting(Boolean.TryParse(value, out var result) && result);
+            return new SettingModel(Boolean.TryParse(value, out var result) && result);
         }
 
-        return new GeneratorSetting(true);
+        return new SettingModel(true);
     }
 
     private static bool IsTargetInvocation(SyntaxNode node)
