@@ -1,14 +1,12 @@
 namespace Smart.CommandLine.Hosting.Generator;
 
 using System.Collections.Immutable;
-using System.Text;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
-using Microsoft.CodeAnalysis.Text;
 
 using Smart.CommandLine.Hosting.Generator.Models;
 
@@ -519,7 +517,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
         builder.EndScope();
 
         // Add source
-        context.AddSource("CommandInitializer.g.cs", SourceText.From(builder.ToString(), Encoding.UTF8));
+        context.AddSource("CommandInitializer.g.cs", builder);
     }
 
     private static void GenerateActionBuilder(SourceBuilder builder, InvocationModel invocation)
