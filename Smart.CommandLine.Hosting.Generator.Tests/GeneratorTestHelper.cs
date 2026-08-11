@@ -1,7 +1,6 @@
 namespace Smart.CommandLine.Hosting.Generator.Tests;
 
 using System.Collections.Generic;
-using System.Linq;
 
 using Microsoft.CodeAnalysis;
 
@@ -13,8 +12,6 @@ internal static class GeneratorTestHelper
 {
     private const string InitializerHintName = "CommandInitializer.g.cs";
 
-    // The generator targets a program with an entry point, so the test sources are compiled
-    // as a console application (the test sources declare Program.Main).
     private static GeneratorTestRunner CreateRunner(IReadOnlyDictionary<string, string>? globalOptions)
     {
         var runner = GeneratorTestRunner
@@ -41,7 +38,6 @@ internal static class GeneratorTestHelper
 
         return new GeneratorResult
         {
-            // Null when the initializer was not generated at all.
             GeneratedSource = result.FindGeneratedSource(InitializerHintName),
             GeneratorDiagnostics = result.GeneratorDiagnostics,
             CompilationErrors = result.CompilationErrors
