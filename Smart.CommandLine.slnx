@@ -11,8 +11,8 @@
     <File Path="Directory.Build.targets" />
     <File Path="LICENSE" />
     <File Path="README.md" />
+    <File Path="Smart.CommandLine.Hosting.targets" />
     <File Path="Smart.CommandLine.sln.DotSettings" />
-    <File Path="Usa.Smart.CommandLine.Hosting.props" />
   </Folder>
   <Project Path="Develop/Develop.csproj" DefaultStartup="true" />
   <Project Path="Smart.CommandLine.Hosting/Smart.CommandLine.Hosting.csproj">

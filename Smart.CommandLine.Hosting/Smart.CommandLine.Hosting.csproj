@@ -13,9 +13,9 @@
 
   <Target Name="PackBuildOutputs" DependsOnTargets="SatelliteDllsProjectOutputGroup;DebugSymbolsProjectOutputGroup">
     <ItemGroup>
-      <TfmSpecificPackageFile Include="..\Usa.Smart.CommandLine.Hosting.props" PackagePath="build" />
       <TfmSpecificPackageFile Include="..\Smart.CommandLine.Hosting.Generator\bin\$(Configuration)\netstandard2.0\Smart.CommandLine.Hosting.Generator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
       <TfmSpecificPackageFile Include="$(PKGSourceGenerateHelper)\lib\netstandard2.0\SourceGenerateHelper.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+      <TfmSpecificPackageFile Include="..\Smart.CommandLine.Hosting.targets" Pack="true" PackagePath="buildTransitive\Usa.Smart.CommandLine.Hosting.targets" Visible="false" />
     </ItemGroup>
   </Target>
 
