@@ -44,6 +44,9 @@ internal static class GeneratorTestHelper
         };
     }
 
+    public static IncrementalRunResult RunIncremental(string source, string addedSource) =>
+        CreateRunner(null).WithTracking().RunIncremental(source, addedSource);
+
     internal sealed class GeneratorResult
     {
         public string? GeneratedSource { get; init; }
