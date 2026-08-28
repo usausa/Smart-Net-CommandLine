@@ -11,6 +11,7 @@
     <File Path="Directory.Build.targets" />
     <File Path="LICENSE" />
     <File Path="README.md" />
+    <File Path="Smart.CommandLine.Hosting.props" />
     <File Path="Smart.CommandLine.Hosting.targets" />
     <File Path="Smart.CommandLine.sln.DotSettings" />
   </Folder>
