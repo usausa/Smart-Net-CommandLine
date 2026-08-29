@@ -115,10 +115,10 @@ public sealed class ScopeFilter : ICommandFilter
         this.scopedService = scopedService;
     }
 
-    public async ValueTask ExecuteAsync(CommandContext context, CommandDelegate next)
+    public ValueTask ExecuteAsync(CommandContext context, CommandDelegate next)
     {
         log.LogInformation("Filter scoped service: {Id}", scopedService.Id);
-        await next(context);
+        return next(context);
     }
 }
 
