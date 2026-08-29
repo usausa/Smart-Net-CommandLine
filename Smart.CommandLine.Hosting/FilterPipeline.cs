@@ -2,15 +2,14 @@ namespace Smart.CommandLine.Hosting;
 
 using System.Diagnostics.CodeAnalysis;
 
+using Microsoft.Extensions.DependencyInjection;
+
 internal sealed class FilterPipeline
 {
-    private readonly IServiceProvider serviceProvider;
-
     private readonly FilterDescriptor[] descriptors;
 
-    public FilterPipeline(IServiceProvider serviceProvider, FilterDescriptor[] descriptors)
+    public FilterPipeline(FilterDescriptor[] descriptors)
     {
-        this.serviceProvider = serviceProvider;
         this.descriptors = descriptors;
     }
 
@@ -26,11 +25,9 @@ internal sealed class FilterPipeline
         CommandDelegate pipeline = ctx => action(ctx);
         for (var i = descriptors.Length - 1; i >= 0; i--)
         {
-            if (serviceProvider.GetService(descriptors[i].FilterType) is ICommandFilter commandFilter)
-            {
-                var next = pipeline;
-                pipeline = ctx => commandFilter.ExecuteAsync(ctx, next);
-            }
+            var commandFilter = (ICommandFilter)context.ServiceProvider.GetRequiredService(descriptors[i].FilterType);
+            var next = pipeline;
+            pipeline = ctx => commandFilter.ExecuteAsync(ctx, next);
         }
 
         // With pipeline
@@ -57,6 +54,6 @@ internal sealed class FilterPipeline
         merged.AddRange(commandDescriptors);
 
         // Stable sort by order (global filters keep priority over command filters on equal order).
-        return merged.OrderBy(static x => x.Order).ToArray();
+        return [.. merged.OrderBy(static x => x.Order)];
     }
 }

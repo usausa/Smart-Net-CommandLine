@@ -43,13 +43,6 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
     {
         this.args = args;
 
-        // Default service provider factory
-        createServiceProvider = () =>
-        {
-            configureContainer(Services);
-            return Services.BuildServiceProvider();
-        };
-
         // Environment
         var contentRootPath = AppContext.BaseDirectory;
         environment = new HostEnvironment
@@ -58,6 +51,20 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
             EnvironmentName = System.Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production",
             ContentRootPath = contentRootPath,
             ContentRootFileProvider = new PhysicalFileProvider(contentRootPath)
+        };
+
+        // Default service provider factory
+        createServiceProvider = () =>
+        {
+            configureContainer(Services);
+
+            // Enable container validation only in the development environment
+            var validate = environment.IsDevelopment();
+            return Services.BuildServiceProvider(new ServiceProviderOptions
+            {
+                ValidateScopes = validate,
+                ValidateOnBuild = validate
+            });
         };
 
         // Configuration
@@ -201,16 +208,21 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
 
         // Set action
         var filterDescriptors = FilterPipeline.BuildDescriptors(globalFilters, descriptor.CommandType);
-        var filterPipeline = new FilterPipeline(serviceProvider, filterDescriptors);
+        var filterPipeline = new FilterPipeline(filterDescriptors);
 
         command.SetAction(async (parseResult, token) =>
         {
-            var handler = (ICommandHandler)ActivatorUtilities.CreateInstance(serviceProvider, descriptor.CommandType);
-            var commandContext = new CommandContext(descriptor.CommandType, handler, token);
+            // Create a service scope per command execution
+            var scope = serviceProvider.CreateAsyncScope();
+            await using (scope.ConfigureAwait(false))
+            {
+                var handler = (ICommandHandler)scope.ServiceProvider.GetRequiredService(descriptor.CommandType);
+                var commandContext = new CommandContext(descriptor.CommandType, handler, scope.ServiceProvider, token);
 
-            await filterPipeline.ExecuteAsync(commandContext, ctx => operation(handler, parseResult, ctx)).ConfigureAwait(false);
+                await filterPipeline.ExecuteAsync(commandContext, ctx => operation(handler, parseResult, ctx)).ConfigureAwait(false);
 
-            return commandContext.ExitCode;
+                return commandContext.ExitCode;
+            }
         });
     }
 }
@@ -281,7 +293,7 @@ internal sealed class CommandBuilder : ICommandBuilder
     {
         if (typeof(ICommandHandler).IsAssignableFrom(typeof(TCommand)))
         {
-            services.AddTransient<TCommand>();
+            services.TryAddTransient<TCommand>();
         }
 
         var descriptor = new CommandDescriptor(typeof(TCommand));
@@ -373,7 +385,7 @@ internal sealed class RootCommandBuilder : IRootCommandBuilder
     public IRootCommandBuilder UseHandler<THandler>()
         where THandler : class, ICommandHandler
     {
-        services.AddTransient<THandler>();
+        services.TryAddTransient<THandler>();
         rootDescriptor = new CommandDescriptor(typeof(THandler));
         return this;
     }
@@ -433,7 +445,7 @@ internal sealed class SubCommandBuilder : ISubCommandBuilder
     {
         if (typeof(ICommandHandler).IsAssignableFrom(typeof(TCommand)))
         {
-            services.AddTransient<TCommand>();
+            services.TryAddTransient<TCommand>();
         }
 
         var descriptor = new CommandDescriptor(typeof(TCommand));

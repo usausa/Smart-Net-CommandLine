@@ -24,6 +24,7 @@ builder.Services.AddLogging(logging =>
 
 // Services
 builder.Services.AddSingleton<GreetService>();
+builder.Services.AddScoped<ScopedService>();
 
 // Commands
 builder.ConfigureCommands(commands =>
@@ -39,6 +40,7 @@ builder.ConfigureCommands(commands =>
     commands.AddCommand<MessageCommand>();
     commands.AddCommand<GreetCommand>();
     commands.AddCommand<FilterCommand>();
+    commands.AddCommand<ScopeCommand>();
     commands.AddCommand<ExceptionCommand>();
     commands.AddCommand<UserCommand>(user =>
     {

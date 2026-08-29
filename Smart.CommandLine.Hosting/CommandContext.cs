@@ -15,14 +15,17 @@ public sealed class CommandContext
 
     public ICommandHandler Command { get; }
 
+    public IServiceProvider ServiceProvider { get; }
+
     public CancellationToken CancellationToken { get; }
 
     public int ExitCode { get; set; }
 
-    public CommandContext(Type commandType, ICommandHandler command, CancellationToken cancellationToken)
+    public CommandContext(Type commandType, ICommandHandler command, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
         CommandType = commandType;
         Command = command;
+        ServiceProvider = serviceProvider;
         CancellationToken = cancellationToken;
     }
 }

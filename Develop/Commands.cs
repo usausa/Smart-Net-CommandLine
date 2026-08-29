@@ -5,6 +5,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace Develop;
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using Smart.CommandLine.Hosting;
@@ -26,6 +27,23 @@ public sealed class GreetService
     {
         log.LogInformation("Greeting: {Message}, {Name}!", message, name);
     }
+}
+
+public sealed class ScopedService : IDisposable
+{
+    private static int counter;
+
+    private readonly ILogger<ScopedService> log;
+
+    public int Id { get; } = Interlocked.Increment(ref counter);
+
+    public ScopedService(ILogger<ScopedService> log)
+    {
+        this.log = log;
+        log.LogInformation("ScopedService created: {Id}", Id);
+    }
+
+    public void Dispose() => log.LogInformation("ScopedService disposed: {Id}", Id);
 }
 
 //--------------------------------------------------------------------------------
@@ -82,6 +100,25 @@ public sealed class ExceptionHandlingFilter : ICommandFilter
             };
         }
 #pragma warning restore CA1031
+    }
+}
+
+public sealed class ScopeFilter : ICommandFilter
+{
+    private readonly ILogger<ScopeFilter> log;
+
+    private readonly ScopedService scopedService;
+
+    public ScopeFilter(ILogger<ScopeFilter> log, ScopedService scopedService)
+    {
+        this.log = log;
+        this.scopedService = scopedService;
+    }
+
+    public async ValueTask ExecuteAsync(CommandContext context, CommandDelegate next)
+    {
+        log.LogInformation("Filter scoped service: {Id}", scopedService.Id);
+        await next(context);
     }
 }
 
@@ -183,6 +220,32 @@ public sealed class FilterCommand : ICommandHandler
         log.LogInformation("Message: {Message}", Message);
 
         await Task.Delay(50, context.CancellationToken);
+    }
+}
+
+[Filter<ScopeFilter>]
+[Command("scope", "Scoped service")]
+public sealed class ScopeCommand : ICommandHandler
+{
+    private readonly ILogger<ScopeCommand> log;
+
+    private readonly ScopedService scopedService;
+
+    public ScopeCommand(ILogger<ScopeCommand> log, ScopedService scopedService)
+    {
+        this.log = log;
+        this.scopedService = scopedService;
+    }
+
+    public ValueTask ExecuteAsync(CommandContext context)
+    {
+        log.LogInformation("Command scoped service: {Id}", scopedService.Id);
+
+        // Resolve from the execution scope
+        var resolved = context.ServiceProvider.GetRequiredService<ScopedService>();
+        log.LogInformation("Resolved scoped service: {Id}, same instance: {Same}", resolved.Id, ReferenceEquals(scopedService, resolved));
+
+        return ValueTask.CompletedTask;
     }
 }
 

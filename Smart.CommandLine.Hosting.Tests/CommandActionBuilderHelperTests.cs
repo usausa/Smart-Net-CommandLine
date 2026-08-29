@@ -293,7 +293,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse(string.Empty);
-        var commandContext = new CommandContext(typeof(CommandWithoutOptions), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithoutOptions), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -317,7 +317,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test --name TestName --value 42");
-        var commandContext = new CommandContext(typeof(SimpleCommand), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(SimpleCommand), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -349,7 +349,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test");
-        var commandContext = new CommandContext(typeof(CommandWithDefaultValue), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithDefaultValue), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -380,7 +380,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test --count 20");
-        var commandContext = new CommandContext(typeof(CommandWithDefaultValue), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithDefaultValue), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -411,7 +411,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test -n ShortName");
-        var commandContext = new CommandContext(typeof(CommandWithAliases), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithAliases), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -439,7 +439,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test --verbose");
-        var commandContext = new CommandContext(typeof(CommandWithDescription), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithDescription), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -517,7 +517,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test --name John --age 30 --active");
-        var commandContext = new CommandContext(typeof(CommandWithMultipleOptions), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithMultipleOptions), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -551,7 +551,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test --value 100");
-        var commandContext = new CommandContext(typeof(CommandWithNullableType), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithNullableType), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -577,7 +577,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test");
-        var commandContext = new CommandContext(typeof(CommandWithNullableType), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithNullableType), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -624,7 +624,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test --format json");
-        var commandContext = new CommandContext(typeof(CommandWithCompletions), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithCompletions), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -669,7 +669,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test --level warning");
-        var commandContext = new CommandContext(typeof(CommandWithGenericCompletions), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithGenericCompletions), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -714,7 +714,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test --port 8080");
-        var commandContext = new CommandContext(typeof(CommandWithIntCompletions), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithIntCompletions), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);
@@ -740,7 +740,7 @@ public sealed class CommandMetadataProviderTests
         var rootCommand = new RootCommand();
         rootCommand.Subcommands.Add(command);
         var parseResult = rootCommand.Parse("test --format csv");
-        var commandContext = new CommandContext(typeof(CommandWithCompletions), commandInstance, CancellationToken.None);
+        var commandContext = new CommandContext(typeof(CommandWithCompletions), commandInstance, serviceProvider, CancellationToken.None);
 
         // Act
         await context.Operation!(commandInstance, parseResult, commandContext);

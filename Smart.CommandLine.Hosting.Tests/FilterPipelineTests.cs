@@ -124,10 +124,10 @@ public sealed class FilterPipelineTests
         // Arrange
         var globalFilters = new FilterCollection();
         var serviceProvider = new TestServiceProvider();
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
 
         var command = new TestCommand();
-        var context = new CommandContext(typeof(TestCommand), command, CancellationToken.None);
+        var context = new CommandContext(typeof(TestCommand), command, serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, ctx => ctx.Command.ExecuteAsync(ctx));
@@ -147,10 +147,10 @@ public sealed class FilterPipelineTests
         var serviceProvider = new TestServiceProvider();
         serviceProvider.AddService(typeof(LoggingFilter), new LoggingFilter(log));
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
 
         var command = new TestCommand();
-        var context = new CommandContext(typeof(TestCommand), command, CancellationToken.None);
+        var context = new CommandContext(typeof(TestCommand), command, serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, ctx =>
@@ -176,9 +176,9 @@ public sealed class FilterPipelineTests
         var serviceProvider = new TestServiceProvider();
         serviceProvider.AddService(typeof(GlobalFilter1), new GlobalFilter1(log));
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(CommandWithFilter)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(CommandWithFilter)));
 
-        var context = new CommandContext(typeof(CommandWithFilter), new CommandWithFilter(), CancellationToken.None);
+        var context = new CommandContext(typeof(CommandWithFilter), new CommandWithFilter(), serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, ctx =>
@@ -206,9 +206,9 @@ public sealed class FilterPipelineTests
         serviceProvider.AddService(typeof(LoggingFilter), new LoggingFilter(log, 5));
         serviceProvider.AddService(typeof(GlobalFilter1), new GlobalFilter1(log));
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(CommandWithFilter)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(CommandWithFilter)));
 
-        var context = new CommandContext(typeof(CommandWithFilter), new CommandWithFilter(), CancellationToken.None);
+        var context = new CommandContext(typeof(CommandWithFilter), new CommandWithFilter(), serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, ctx =>
@@ -239,9 +239,9 @@ public sealed class FilterPipelineTests
         serviceProvider.AddService(typeof(GlobalFilter1), new GlobalFilter1(log));
         serviceProvider.AddService(typeof(GlobalFilter2), new GlobalFilter2(log));
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(CommandWithMultipleFilters)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(CommandWithMultipleFilters)));
 
-        var context = new CommandContext(typeof(CommandWithMultipleFilters), new CommandWithMultipleFilters(), CancellationToken.None);
+        var context = new CommandContext(typeof(CommandWithMultipleFilters), new CommandWithMultipleFilters(), serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, ctx =>
@@ -279,9 +279,9 @@ public sealed class FilterPipelineTests
         serviceProvider.AddService(typeof(GlobalFilter1), filter2);
         serviceProvider.AddService(typeof(GlobalFilter2), filter3);
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(CommandWithMultipleFilters)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(CommandWithMultipleFilters)));
 
-        var context = new CommandContext(typeof(CommandWithMultipleFilters), new CommandWithMultipleFilters(), CancellationToken.None);
+        var context = new CommandContext(typeof(CommandWithMultipleFilters), new CommandWithMultipleFilters(), serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, _ =>
@@ -307,10 +307,10 @@ public sealed class FilterPipelineTests
         var serviceProvider = new TestServiceProvider();
         serviceProvider.AddService(typeof(ExitCodeFilter), new ExitCodeFilter(42));
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
 
         var command = new TestCommand();
-        var context = new CommandContext(typeof(TestCommand), command, CancellationToken.None);
+        var context = new CommandContext(typeof(TestCommand), command, serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, _ => ValueTask.CompletedTask);
@@ -329,10 +329,10 @@ public sealed class FilterPipelineTests
         var serviceProvider = new TestServiceProvider();
         serviceProvider.AddService(typeof(ShortCircuitFilter), new ShortCircuitFilter());
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
 
         var command = new TestCommand();
-        var context = new CommandContext(typeof(TestCommand), command, CancellationToken.None);
+        var context = new CommandContext(typeof(TestCommand), command, serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, ctx => ctx.Command.ExecuteAsync(ctx));
@@ -343,7 +343,7 @@ public sealed class FilterPipelineTests
     }
 
     [Fact]
-    public async Task ExecuteAsyncWithMissingFilterInServiceProviderSkipsFilter()
+    public async Task ExecuteAsyncWithMissingFilterInServiceProviderThrows()
     {
         // Arrange
         var globalFilters = new FilterCollection();
@@ -351,16 +351,14 @@ public sealed class FilterPipelineTests
 
         var serviceProvider = new TestServiceProvider(); // No filter registered
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
 
         var command = new TestCommand();
-        var context = new CommandContext(typeof(TestCommand), command, CancellationToken.None);
+        var context = new CommandContext(typeof(TestCommand), command, serviceProvider, CancellationToken.None);
 
-        // Act
-        await pipeline.ExecuteAsync(context, ctx => ctx.Command.ExecuteAsync(ctx));
-
-        // Assert
-        Assert.True(command.Executed);
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await pipeline.ExecuteAsync(context, ctx => ctx.Command.ExecuteAsync(ctx)));
+        Assert.False(command.Executed);
     }
 
     [Fact]
@@ -391,10 +389,10 @@ public sealed class FilterPipelineTests
             return null;
         };
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
 
         var command = new TestCommand();
-        var context = new CommandContext(typeof(TestCommand), command, CancellationToken.None);
+        var context = new CommandContext(typeof(TestCommand), command, serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, ctx =>
@@ -421,10 +419,10 @@ public sealed class FilterPipelineTests
         var serviceProvider = new TestServiceProvider();
         serviceProvider.AddService(typeof(LoggingFilter), new LoggingFilter(log));
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
 
         var command = new TestCommand();
-        var context = new CommandContext(typeof(TestCommand), command, CancellationToken.None);
+        var context = new CommandContext(typeof(TestCommand), command, serviceProvider, CancellationToken.None);
         context.Items.Add("test-key", "test-value");
 
         // Act
@@ -450,10 +448,10 @@ public sealed class FilterPipelineTests
         var serviceProvider = new TestServiceProvider();
         serviceProvider.AddService(typeof(LoggingFilter), new LoggingFilter(log));
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(TestCommand)));
 
         var command = new TestCommand();
-        var context = new CommandContext(typeof(TestCommand), command, CancellationToken.None);
+        var context = new CommandContext(typeof(TestCommand), command, serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, ctx =>
@@ -502,9 +500,9 @@ public sealed class FilterPipelineTests
             return null;
         };
 
-        var pipeline = new FilterPipeline(serviceProvider, FilterPipeline.BuildDescriptors(globalFilters, typeof(CommandWithFilter)));
+        var pipeline = new FilterPipeline(FilterPipeline.BuildDescriptors(globalFilters, typeof(CommandWithFilter)));
 
-        var context = new CommandContext(typeof(CommandWithFilter), new CommandWithFilter(), CancellationToken.None);
+        var context = new CommandContext(typeof(CommandWithFilter), new CommandWithFilter(), serviceProvider, CancellationToken.None);
 
         // Act
         await pipeline.ExecuteAsync(context, ctx =>
