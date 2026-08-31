@@ -284,7 +284,7 @@ public static class CommandMetadataProvider
     private static MethodInfo ResolveParseResultGetValueMethod() =>
         typeof(ParseResult)
             .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .First(static x => x is { Name: nameof(ParseResult.GetValue), IsGenericMethodDefinition: true } &&
+            .First(static x => (x is { Name: nameof(ParseResult.GetValue), IsGenericMethodDefinition: true }) &&
                               (x.GetParameters().Length == 1) &&
                               x.GetParameters()[0].ParameterType.IsGenericType &&
                               (x.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Option<>)));

@@ -985,7 +985,7 @@ public class CommandGeneratorTests
         // Assert - the filter descriptor is registered only once despite the duplicate call sites
         Assert.NotNull(result.GeneratedSource);
         var occurrences = CountOccurrences(
-            result.GeneratedSource!,
+            result.GeneratedSource,
             "AddFilterDescriptor<global::TestApp.FooCommand, global::TestApp.LoggingFilter>(0);");
         Assert.Equal(1, occurrences);
         Assert.Empty(result.CompilationErrors);

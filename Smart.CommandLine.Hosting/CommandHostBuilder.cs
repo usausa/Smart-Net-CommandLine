@@ -259,6 +259,7 @@ internal sealed class LoggingBuilder : ILoggingBuilder
 
 internal sealed class CommandBuilder : ICommandBuilder
 {
+#pragma warning disable SA1214
     private readonly IServiceCollection services;
 
     private RootCommand? rootCommand;
@@ -268,6 +269,7 @@ internal sealed class CommandBuilder : ICommandBuilder
     private CommandDescriptor? rootDescriptor;
 
     private readonly List<CommandDescriptor> commandDescriptors = [];
+#pragma warning restore SA1214
 
     private readonly FilterCollection globalFilters = new();
 

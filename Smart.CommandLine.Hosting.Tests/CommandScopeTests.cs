@@ -179,6 +179,7 @@ public sealed class CommandScopeTests
 // Probe
 //--------------------------------------------------------------------------------
 
+#pragma warning disable CA1002
 public sealed class ScopeRecorder
 {
     public List<ScopeProbeCommand> Handlers { get; } = [];
@@ -191,6 +192,7 @@ public sealed class ScopeRecorder
 
     public List<RegistrationProbeCommand> Executions { get; } = [];
 }
+#pragma warning restore CA1002
 
 public sealed class SingletonProbe : IDisposable
 {

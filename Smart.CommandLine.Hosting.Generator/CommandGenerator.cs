@@ -253,7 +253,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 if (property.IsStatic ||
                     property.IsIndexer ||
                     (property.DeclaredAccessibility != Accessibility.Public) ||
-                    property.SetMethod is not { DeclaredAccessibility: Accessibility.Public, IsInitOnly: false })
+                    (property.SetMethod is not { DeclaredAccessibility: Accessibility.Public, IsInitOnly: false }))
                 {
                     continue;
                 }
@@ -406,7 +406,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
             {
                 var name = enumType.GetMembers()
                     .OfType<IFieldSymbol>()
-                    .FirstOrDefault(x => x is { HasConstantValue: true } && Equals(x.ConstantValue, typedConstant.Value))
+                    .FirstOrDefault(x => (x is { HasConstantValue: true }) && Equals(x.ConstantValue, typedConstant.Value))
                     ?.Name;
                 return name ?? string.Empty;
             }
