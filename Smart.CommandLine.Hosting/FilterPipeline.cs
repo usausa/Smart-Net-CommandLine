@@ -54,6 +54,6 @@ internal sealed class FilterPipeline
         merged.AddRange(commandDescriptors);
 
         // Stable sort by order (global filters keep priority over command filters on equal order).
-        return [.. merged.OrderBy(static x => x.Order)];
+        return merged.OrderBy(static x => x.Order).ToArray();
     }
 }

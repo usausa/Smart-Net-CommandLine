@@ -211,7 +211,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
             currentType = currentType.BaseType;
         }
 
-        return [with([.. filters])];
+        return [with(filters.ToArray())];
     }
 
     private static CommandModel? ExtractCommandModel(ITypeSymbol typeSymbol)
@@ -358,7 +358,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
             hierarchyLevel--;
         }
 
-        return [with([.. options])];
+        return [with(options.ToArray())];
     }
 
     private static string[] ExtractAliases(TypedConstant typedConstant)
@@ -375,7 +375,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 }
             }
 
-            return [.. result];
+            return result.ToArray();
         }
 
         return [];
@@ -392,7 +392,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 result.Add(ConvertValueToString(element));
             }
 
-            return [.. result];
+            return result.ToArray();
         }
 
         return [];
