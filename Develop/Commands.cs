@@ -263,9 +263,7 @@ public sealed class ExceptionCommand : ICommandHandler
 //--------------------------------------------------------------------------------
 
 [Command("user", "User level 1")]
-public sealed class UserCommand
-{
-}
+public sealed class UserCommand;
 
 [Command("list", "User level 1-1")]
 public sealed class UserListCommand : ICommandHandler
@@ -315,9 +313,7 @@ public sealed class UserAddCommand : ICommandHandler
 }
 
 [Command("role", "User level 1-3")]
-public sealed class UserRoleCommand
-{
-}
+public sealed class UserRoleCommand;
 
 public abstract class UserRoleCommandBase : ICommandHandler
 {

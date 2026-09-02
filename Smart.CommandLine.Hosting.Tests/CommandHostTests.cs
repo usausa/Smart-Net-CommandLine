@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 
-#pragma warning disable CA1034
 public sealed class CommandHostTests
 {
     //--------------------------------------------------------------------------------
@@ -150,7 +149,6 @@ public sealed class CommandHostTests
         public void Dispose() => Disposed = true;
     }
 }
-#pragma warning restore CA1034
 
 public sealed class CommandHostBuilderEnvironmentTests
 {
