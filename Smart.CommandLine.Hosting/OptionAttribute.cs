@@ -97,6 +97,8 @@ public sealed class OptionAttribute<T> : BaseOptionAttribute
 
     protected override object? ResolveDefaultValue() => DefaultValue;
 
+#pragma warning disable IDE0028
     protected override string[] ResolveCompletions() =>
         Completions is { Length: > 0 } ? Completions.Select(c => c?.ToString() ?? string.Empty).ToArray() : [];
+#pragma warning restore IDE0028
 }
