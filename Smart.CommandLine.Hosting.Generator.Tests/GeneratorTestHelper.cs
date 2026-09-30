@@ -44,6 +44,9 @@ internal static class GeneratorTestHelper
         };
     }
 
+    public static IReadOnlyList<string> GetProblemIds(string source) =>
+        [.. CreateRunner(null).GetProblems(source).Select(static x => x.Id)];
+
     public static IncrementalRunResult RunIncremental(string source, string addedSource) =>
         CreateRunner(null).WithTracking().RunIncremental(source, addedSource);
 

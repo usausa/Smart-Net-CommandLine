@@ -7,6 +7,17 @@ using System.CommandLine;
 
 public sealed class CommandMetadataProviderTests
 {
+    private sealed class CommandWithInitializer : ICommandHandler
+    {
+        [Option("--name")]
+        public string Name { get; set; } = "initial";
+
+        [Option("--count")]
+        public int Count { get; set; } = 5;
+
+        public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+    }
+
     private sealed class SimpleCommand : ICommandHandler
     {
         [Option("--name")]
@@ -332,6 +343,31 @@ public sealed class CommandMetadataProviderTests
         Assert.Equal("TestName", commandInstance.Name);
         Assert.Equal(42, commandInstance.Value);
         Assert.True(commandInstance.Executed);
+    }
+
+    [Fact]
+    public async Task ResolveActionBuilderOperationWithoutResultKeepsPropertyValue()
+    {
+        // Arrange
+        var serviceProvider = new TestServiceProvider();
+        var command = new Command("test");
+        var context = new CommandActionBuilderContext(typeof(CommandWithInitializer), command, serviceProvider);
+
+        var actionBuilder = CommandMetadataProvider.ResolveActionBuilder(typeof(CommandWithInitializer));
+        actionBuilder(context);
+
+        var commandInstance = new CommandWithInitializer();
+        var rootCommand = new RootCommand();
+        rootCommand.Subcommands.Add(command);
+        var parseResult = rootCommand.Parse("test");
+        var commandContext = new CommandContext(typeof(CommandWithInitializer), commandInstance, serviceProvider, CancellationToken.None);
+
+        // Act
+        await context.Operation!(commandInstance, parseResult, commandContext);
+
+        // Assert
+        Assert.Equal("initial", commandInstance.Name);
+        Assert.Equal(5, commandInstance.Count);
     }
 
     [Fact]

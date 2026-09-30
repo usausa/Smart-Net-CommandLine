@@ -15,8 +15,8 @@
     <ItemGroup>
       <TfmSpecificPackageFile Include="..\Smart.CommandLine.Hosting.Generator\bin\$(Configuration)\netstandard2.0\Smart.CommandLine.Hosting.Generator.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
       <TfmSpecificPackageFile Include="$(PKGSourceGenerateHelper)\lib\netstandard2.0\SourceGenerateHelper.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-      <TfmSpecificPackageFile Include="..\Smart.CommandLine.Hosting.props" Pack="true" PackagePath="buildTransitive\Usa.Smart.CommandLine.Hosting.props" Visible="false" />
-      <TfmSpecificPackageFile Include="..\Smart.CommandLine.Hosting.targets" Pack="true" PackagePath="buildTransitive\Usa.Smart.CommandLine.Hosting.targets" Visible="false" />
+      <TfmSpecificPackageFile Include="..\Smart.CommandLine.Hosting.props" Pack="true" PackagePath="build\Usa.Smart.CommandLine.Hosting.props" Visible="false" />
+      <TfmSpecificPackageFile Include="..\Smart.CommandLine.Hosting.targets" Pack="true" PackagePath="build\Usa.Smart.CommandLine.Hosting.targets" Visible="false" />
     </ItemGroup>
   </Target>
 
@@ -28,7 +28,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SourceGenerateHelper" Version="1.28.0" GeneratePathProperty="true" PrivateAssets="all" />
+    <PackageReference Include="SourceGenerateHelper" Version="1.30.0" GeneratePathProperty="true" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />

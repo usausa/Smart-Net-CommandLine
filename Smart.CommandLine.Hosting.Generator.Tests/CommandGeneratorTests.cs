@@ -1,5 +1,7 @@
 namespace Smart.CommandLine.Hosting.Generator.Tests;
 
+using Microsoft.CodeAnalysis;
+
 public class CommandGeneratorTests
 {
     // Minimal source template for a simple command without handler
@@ -31,7 +33,7 @@ public class CommandGeneratorTests
     //--------------------------------------------------------------------------------
 
     [Fact]
-    public void GenerateScaffoldingContainsInternalStaticClass()
+    public void GenerateScaffoldingContainsFileStaticClass()
     {
         // Arrange
         const string source =
@@ -63,7 +65,7 @@ public class CommandGeneratorTests
 
         // Assert
         Assert.NotNull(result.GeneratedSource);
-        Assert.Contains("internal static class CommandInitializer", result.GeneratedSource, StringComparison.Ordinal);
+        Assert.Contains("file static class CommandInitializer", result.GeneratedSource, StringComparison.Ordinal);
         Assert.Contains("[global::System.Runtime.CompilerServices.ModuleInitializer]", result.GeneratedSource, StringComparison.Ordinal);
         Assert.Empty(result.GeneratorDiagnostics);
         Assert.Empty(result.CompilationErrors);
@@ -793,7 +795,7 @@ public class CommandGeneratorTests
     }
 
     [Fact]
-    public void GenerateSettingInvalidValueReturnsNull()
+    public void GenerateSettingInvalidValueWarnsAndGenerates()
     {
         // Arrange
         const string source =
@@ -829,7 +831,9 @@ public class CommandGeneratorTests
         var result = GeneratorTestHelper.RunGenerator(source, options);
 
         // Assert
-        Assert.Null(result.GeneratedSource);
+        Assert.NotNull(result.GeneratedSource);
+        var diagnostic = Assert.Single(result.GeneratorDiagnostics, static x => x.Id == "SCL0004");
+        Assert.Equal(DiagnosticSeverity.Warning, diagnostic.Severity);
     }
 
     //--------------------------------------------------------------------------------

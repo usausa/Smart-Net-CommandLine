@@ -7,4 +7,6 @@ internal sealed record InvocationModel(
     bool ImplementsHandler,
     CommandModel? CommandInfo,
     EquatableArray<FilterModel> Filters,
-    EquatableArray<OptionModel> Options);
+    EquatableArray<OptionModel> Options,
+    EquatableArray<DiagnosticInfo> Diagnostics = default,
+    bool IsReferable = true);

@@ -133,7 +133,7 @@ public static class CommandMetadataProvider
                 option.Required = attribute.GetRequired();
 
                 // Set default value factory
-                var (hasValue, value) = GetDefaultValue(property, attribute);
+                var (hasValue, value) = GetDefaultValue(attribute);
                 if (hasValue)
                 {
                     SetDefaultValueFactory(option, property.PropertyType, value);
@@ -160,6 +160,11 @@ public static class CommandMetadataProvider
                 // Set property values
                 foreach (var (property, option, getValue) in propertyArguments)
                 {
+                    if (parseResult.GetResult(option) is null)
+                    {
+                        continue;
+                    }
+
                     var value = getValue.Invoke(parseResult, [option]);
                     property.SetValue(command, value);
                 }
@@ -219,22 +224,10 @@ public static class CommandMetadataProvider
         return propertiesWithMetadata.Select(static x => (x.Property, x.Attribute));
     }
 
-    [RequiresUnreferencedCode("Uses Activator.CreateInstance for value type default values.")]
-    private static (bool HasValue, object? Value) GetDefaultValue(PropertyInfo property, IOptionAttribute attribute)
+    private static (bool HasValue, object? Value) GetDefaultValue(IOptionAttribute attribute)
     {
         var defaultValue = attribute.GetDefaultValue();
-        if (defaultValue is not null)
-        {
-            return (true, defaultValue);
-        }
-
-        if (!attribute.GetRequired())
-        {
-            defaultValue = property.PropertyType.IsValueType ? Activator.CreateInstance(property.PropertyType) : null;
-            return (true, defaultValue);
-        }
-
-        return (false, null);
+        return defaultValue is not null ? (true, defaultValue) : (false, null);
     }
 
     [RequiresUnreferencedCode("Uses GetProperty and MakeGenericMethod with reflection.")]
