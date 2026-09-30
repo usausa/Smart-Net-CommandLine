@@ -1,6 +1,7 @@
 namespace Smart.CommandLine.Hosting.Generator;
 
 using System.Collections.Immutable;
+using System.Globalization;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -15,7 +16,7 @@ using SourceGenerateHelper;
 [Generator]
 public sealed class CommandGenerator : IIncrementalGenerator
 {
-    private const string EnableInterceptorOptionName = "build_property.EnableSmartCommandLineHostingGenerator";
+    private const string EnableInterceptorOptionName = "EnableSmartCommandLineHostingGenerator";
 
     private const string AddCommandMethodName = "AddCommand";
     private const string AddSubCommandMethodName = "AddSubCommand";
@@ -42,8 +43,10 @@ public sealed class CommandGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // Read setting
-        var settingProvider = context.AnalyzerConfigOptionsProvider
+        var settingResultProvider = context.AnalyzerConfigOptionsProvider
             .Select(static (provider, _) => SelectSetting(provider));
+        context.RegisterSourceOutput(settingResultProvider, static (context, result) => context.ReportDiagnostics(result.Diagnostics));
+        var settingProvider = settingResultProvider.Select(static (result, _) => result.Value);
 
         // Find invocations
         var invocationProvider = context.SyntaxProvider
@@ -52,6 +55,9 @@ public sealed class CommandGenerator : IIncrementalGenerator
                 transform: static (context, _) => GetInvocationModel(context))
             .Where(static x => x is not null)
             .Collect();
+
+        context.RegisterSourceOutput(invocationProvider, static (context, invocations) =>
+            context.ReportDiagnostics(invocations.SelectMany(static x => x!.Diagnostics).Distinct()));
 
         var combined = settingProvider.Combine(invocationProvider);
 
@@ -78,14 +84,18 @@ public sealed class CommandGenerator : IIncrementalGenerator
     // Parser
     // ------------------------------------------------------------
 
-    private static SettingModel SelectSetting(AnalyzerConfigOptionsProvider provider)
+    private static Result<SettingModel> SelectSetting(AnalyzerConfigOptionsProvider provider)
     {
-        if (provider.GlobalOptions.TryGetValue(EnableInterceptorOptionName, out var value) && !String.IsNullOrEmpty(value))
+        if (provider.GlobalOptions.TryGetValue<bool>(EnableInterceptorOptionName, out var enable, out var invalidValue))
         {
-            return new SettingModel(Boolean.TryParse(value, out var result) && result);
+            return Results.Success(new SettingModel(enable));
         }
 
-        return new SettingModel(true);
+        return invalidValue is null
+            ? Results.Success(new SettingModel(true))
+            : new Result<SettingModel>(
+                new SettingModel(true),
+                new EquatableArray<DiagnosticInfo>([new DiagnosticInfo(Diagnostics.InvalidPropertyValue, (Location?)null, EnableInterceptorOptionName, invalidValue)]));
     }
 
     private static bool IsTargetInvocation(SyntaxNode node)
@@ -145,16 +155,51 @@ public sealed class CommandGenerator : IIncrementalGenerator
             return null;
         }
 
+        var typeFullName = typeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+        if (!IsReferable(typeArgument))
+        {
+            var location = invocation.Expression is MemberAccessExpressionSyntax { Name: GenericNameSyntax name } ? name.GetLocation() : invocation.GetLocation();
+            return new InvocationModel(
+                typeFullName,
+                false,
+                null,
+                EquatableArray<FilterModel>.Empty,
+                EquatableArray<OptionModel>.Empty,
+                new EquatableArray<DiagnosticInfo>([new DiagnosticInfo(Diagnostics.CommandNotReferable, location, typeArgument.ToDisplayString())]),
+                IsReferable: false);
+        }
+
         var isImplementsHandler = IsImplementsHandler(typeArgument);
         var filters = ExtractFilterModels(typeArgument);
-        var options = ExtractOptionModels(typeArgument);
+        var diagnostics = new List<DiagnosticInfo>();
+        var options = ExtractOptionModels(typeArgument, context.SemanticModel, invocation.SpanStart, diagnostics);
 
         return new InvocationModel(
-            typeArgument.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            typeFullName,
             isImplementsHandler,
             command,
             filters,
-            options);
+            options,
+            new EquatableArray<DiagnosticInfo>(diagnostics));
+    }
+
+    private static bool IsReferable(ITypeSymbol type)
+    {
+        if (type is INamedTypeSymbol { IsFileLocal: true })
+        {
+            return false;
+        }
+
+        for (var current = type; current is not null; current = current.ContainingType)
+        {
+            if (current.DeclaredAccessibility is Accessibility.Private or Accessibility.Protected or Accessibility.ProtectedAndInternal)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static bool IsImplementsHandler(ITypeSymbol typeSymbol)
@@ -233,30 +278,31 @@ public sealed class CommandGenerator : IIncrementalGenerator
         return new CommandModel(name, description);
     }
 
-    private static EquatableArray<OptionModel> ExtractOptionModels(ITypeSymbol typeSymbol)
+    private static EquatableArray<OptionModel> ExtractOptionModels(ITypeSymbol typeSymbol, SemanticModel semanticModel, int position, List<DiagnosticInfo> diagnostics)
     {
         var options = new List<OptionModel>();
+
+        var hidden = new HashSet<string>(StringComparer.Ordinal);
 
         var hierarchyLevel = 0;
         var currentType = typeSymbol;
         while ((currentType is not null) && (currentType.SpecialType != SpecialType.System_Object))
         {
+            var declared = new List<string>();
             var propertyIndex = 0;
             foreach (var member in currentType.GetMembers())
             {
-                if (member is not IPropertySymbol property)
+                if (member.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal or Accessibility.ProtectedOrInternal)
+                {
+                    declared.Add(member.Name);
+                }
+
+                if ((member is not IPropertySymbol property) || property.IsStatic || property.IsIndexer)
                 {
                     continue;
                 }
 
-                // Skip properties that cannot be assigned from generated code
-                if (property.IsStatic ||
-                    property.IsIndexer ||
-                    (property.DeclaredAccessibility != Accessibility.Public) ||
-                    (property.SetMethod is not { DeclaredAccessibility: Accessibility.Public, IsInitOnly: false }))
-                {
-                    continue;
-                }
+                var hiddenDeclaringType = hidden.Contains(member.Name) ? currentType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : null;
 
                 foreach (var attribute in property.GetAttributes())
                 {
@@ -281,8 +327,15 @@ public sealed class CommandGenerator : IIncrementalGenerator
                         continue;
                     }
 
+                    if ((property.DeclaredAccessibility != Accessibility.Public) ||
+                        (property.SetMethod is not { DeclaredAccessibility: Accessibility.Public, IsInitOnly: false }))
+                    {
+                        diagnostics.Add(new DiagnosticInfo(Diagnostics.OptionNotWritable, property.Locations.FirstOrDefault(), property.ToDisplayString()));
+                        break;
+                    }
+
                     // Get property type
-                    var propertyType = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    var propertyType = property.Type.ToDisplayString(SymbolDisplayFormats.FullyQualifiedNullable);
 
                     // Extract option information
                     var order = int.MaxValue;
@@ -329,7 +382,18 @@ public sealed class CommandGenerator : IIncrementalGenerator
                                 required = namedArg.Value.Value is true;
                                 break;
                             case DefaultValuePropertyName:
-                                defaultValue = namedArg.Value.ToCSharpStringWithPostfix();
+                                if (namedArg.Value.TryToCSharpExpression(property.Type, semanticModel, position, out var expression))
+                                {
+                                    defaultValue = expression;
+                                }
+                                else
+                                {
+                                    diagnostics.Add(new DiagnosticInfo(
+                                        Diagnostics.DefaultValueNotConvertible,
+                                        property.Locations.FirstOrDefault(),
+                                        property.ToDisplayString(),
+                                        property.Type.ToDisplayString()));
+                                }
                                 break;
                             case CompletionsPropertyName:
                                 completions = ExtractCompletions(namedArg.Value);
@@ -348,12 +412,14 @@ public sealed class CommandGenerator : IIncrementalGenerator
                         description,
                         required,
                         defaultValue,
-                        new EquatableArray<string>(completions)));
+                        new EquatableArray<string>(completions),
+                        hiddenDeclaringType));
 
                     propertyIndex++;
                 }
             }
 
+            hidden.UnionWith(declared);
             currentType = currentType.BaseType;
             hierarchyLevel--;
         }
@@ -363,7 +429,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
 
     private static string[] ExtractAliases(TypedConstant typedConstant)
     {
-        if (typedConstant is { Kind: TypedConstantKind.Array, Values.IsEmpty: false })
+        if (typedConstant is { Kind: TypedConstantKind.Array, IsNull: false, Values.IsEmpty: false })
         {
             var result = new List<string>();
 
@@ -383,7 +449,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
 
     private static string[] ExtractCompletions(TypedConstant typedConstant)
     {
-        if (typedConstant is { Kind: TypedConstantKind.Array, Values.IsEmpty: false })
+        if (typedConstant is { Kind: TypedConstantKind.Array, IsNull: false, Values.IsEmpty: false })
         {
             var result = new List<string>();
 
@@ -414,7 +480,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
             return string.Empty;
         }
 
-        return typedConstant.Value?.ToString() ?? string.Empty;
+        return Convert.ToString(typedConstant.Value, CultureInfo.InvariantCulture) ?? string.Empty;
     }
 
     // ------------------------------------------------------------
@@ -433,12 +499,13 @@ public sealed class CommandGenerator : IIncrementalGenerator
 
         builder.AutoGenerated();
         builder.EnableNullable();
+        builder.Disable("CS0612, CS0618");
         builder.NewLine();
 
         // class
         builder
             .Indent()
-            .Append("internal static class CommandInitializer")
+            .Append("file static class CommandInitializer")
             .NewLine();
         builder.BeginScope();
 
@@ -457,7 +524,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
         var registeredTypes = new HashSet<string>(StringComparer.Ordinal);
         foreach (var invocation in invocations)
         {
-            if (!registeredTypes.Add(invocation.TypeFullName))
+            if (!invocation.IsReferable || !registeredTypes.Add(invocation.TypeFullName))
             {
                 continue;
             }
@@ -542,7 +609,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
         // Generate option variables
         for (var i = 0; i < sortedOptions.Count; i++)
         {
-            var (_, propertyType, _, _, _, name, aliases, description, required, defaultValue, completions) = sortedOptions[i];
+            var (_, propertyType, _, _, _, name, aliases, description, required, defaultValue, completions, _) = sortedOptions[i];
             var optionVar = $"option{i}";
 
             builder
@@ -664,12 +731,21 @@ public sealed class CommandGenerator : IIncrementalGenerator
 
             builder
                 .Indent()
-                .Append("target.")
-                .Append(option.PropertyName)
+                .Append("if (result.GetResult(")
+                .Append(optionVar)
+                .Append(") is not null)")
+                .NewLine();
+            builder.BeginScope();
+            builder
+                .Indent()
+                .Append(option.HiddenDeclaringTypeFullName is null ? "target" : $"(({option.HiddenDeclaringTypeFullName})target)")
+                .Append(".")
+                .Append(CSharpIdentifier.Escape(option.PropertyName))
                 .Append(" = result.GetValue(")
                 .Append(optionVar)
                 .Append(")!;")
                 .NewLine();
+            builder.EndScope();
         }
 
         if (sortedOptions.Count > 0)
