@@ -1,5 +1,9 @@
 namespace Smart.CommandLine.Hosting.Generator.Tests;
 
+using System.Reflection;
+
+using Microsoft.CodeAnalysis;
+
 public class OptionDeclarationTests
 {
     private const string Program =
@@ -246,6 +250,23 @@ public class OptionDeclarationTests
 
         // Assert
         Assert.Equal(["SCL0003"], problems);
+    }
+
+    [Fact]
+    public void ErrorsCannotBeSuppressed()
+    {
+        // Arrange
+        var descriptors = typeof(CommandGenerator).Assembly.GetType("Smart.CommandLine.Hosting.Generator.Diagnostics", throwOnError: true)!
+            .GetProperties(BindingFlags.Public | BindingFlags.Static)
+            .Where(static x => x.PropertyType == typeof(DiagnosticDescriptor))
+            .Select(static x => (DiagnosticDescriptor)x.GetValue(null)!)
+            .ToList();
+
+        // Assert
+        Assert.NotEmpty(descriptors);
+        Assert.All(
+            descriptors.Where(static x => x.DefaultSeverity == DiagnosticSeverity.Error),
+            static x => Assert.Equal([WellKnownDiagnosticTags.NotConfigurable, WellKnownDiagnosticTags.Compiler], x.CustomTags));
     }
 
     [Fact]
