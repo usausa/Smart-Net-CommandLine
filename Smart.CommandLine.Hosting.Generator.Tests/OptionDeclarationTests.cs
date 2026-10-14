@@ -155,42 +155,8 @@ public class OptionDeclarationTests
         Assert.Contains("target.@event = ", result.GeneratedSource, StringComparison.Ordinal);
     }
 
-    [Theory]
-    [InlineData("public string Name { get; init; } = string.Empty;")]
-    [InlineData("public string Name { get; private set; } = string.Empty;")]
-    [InlineData("public string Name => string.Empty;")]
-    public void Scl0001OptionThatCannotBeWrittenEmitsDiagnostic(string property)
-    {
-        // Arrange
-        var source = $$"""
-            #nullable enable
-            using System.Threading.Tasks;
-            using Smart.CommandLine.Hosting;
-
-            namespace TestApp;
-
-            [Command("foo", "Foo command")]
-            public sealed class FooCommand : ICommandHandler
-            {
-                [Option<string>("--name")]
-                {{property}}
-
-                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
-            }
-            """ + Program;
-
-        // Act
-        var enabled = GeneratorTestHelper.RunGenerator(source);
-        var disabled = GeneratorTestHelper.RunGenerator(source, new Dictionary<string, string> { ["build_property.EnableSmartCommandLineHostingGenerator"] = "false" });
-
-        // Assert
-        Assert.Contains(enabled.GeneratorDiagnostics, static x => x.Id == "SCL0001");
-        Assert.Contains(disabled.GeneratorDiagnostics, static x => x.Id == "SCL0001");
-        Assert.DoesNotContain("\"--name\"", enabled.GeneratedSource, StringComparison.Ordinal);
-    }
-
     [Fact]
-    public void Scl0002CommandThatCannotBeReferredToEmitsDiagnostic()
+    public void Scl0001CommandThatCannotBeReferredToEmitsDiagnostic()
     {
         // Arrange
         const string source =
@@ -221,7 +187,41 @@ public class OptionDeclarationTests
         var problems = GeneratorTestHelper.GetProblemIds(source);
 
         // Assert
-        Assert.Equal(["SCL0002"], problems);
+        Assert.Equal(["SCL0001"], problems);
+    }
+
+    [Theory]
+    [InlineData("public string Name { get; init; } = string.Empty;")]
+    [InlineData("public string Name { get; private set; } = string.Empty;")]
+    [InlineData("public string Name => string.Empty;")]
+    public void Scl0002OptionThatCannotBeWrittenEmitsDiagnostic(string property)
+    {
+        // Arrange
+        var source = $$"""
+            #nullable enable
+            using System.Threading.Tasks;
+            using Smart.CommandLine.Hosting;
+
+            namespace TestApp;
+
+            [Command("foo", "Foo command")]
+            public sealed class FooCommand : ICommandHandler
+            {
+                [Option<string>("--name")]
+                {{property}}
+
+                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+            }
+            """ + Program;
+
+        // Act
+        var enabled = GeneratorTestHelper.RunGenerator(source);
+        var disabled = GeneratorTestHelper.RunGenerator(source, new Dictionary<string, string> { ["build_property.EnableSmartCommandLineHostingGenerator"] = "false" });
+
+        // Assert
+        Assert.Contains(enabled.GeneratorDiagnostics, static x => x.Id == "SCL0002");
+        Assert.Contains(disabled.GeneratorDiagnostics, static x => x.Id == "SCL0002");
+        Assert.DoesNotContain("\"--name\"", enabled.GeneratedSource, StringComparison.Ordinal);
     }
 
     [Fact]

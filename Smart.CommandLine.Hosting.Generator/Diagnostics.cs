@@ -6,19 +6,19 @@ using SourceGenerateHelper;
 
 internal static class Diagnostics
 {
-    public static DiagnosticDescriptor OptionNotWritable { get; } = new(
+    public static DiagnosticDescriptor CommandNotReferable { get; } = new(
         id: "SCL0001",
-        title: "Option property is not writable",
-        messageFormat: "Option property must have a public setter that is not init-only, and is not bound. property=[{0}]",
+        title: "Command type cannot be referred to",
+        messageFormat: "Command type must not be file-local or nested in a private or protected type, and is not registered. type=[{0}]",
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         customTags: DiagnosticTags.NotSuppressible);
 
-    public static DiagnosticDescriptor CommandNotReferable { get; } = new(
+    public static DiagnosticDescriptor OptionNotWritable { get; } = new(
         id: "SCL0002",
-        title: "Command type cannot be referred to",
-        messageFormat: "Command type must not be file-local or nested in a private or protected type, and is not registered. type=[{0}]",
+        title: "Option property is not writable",
+        messageFormat: "Option property must have a public setter that is not init-only, and is not bound. property=[{0}]",
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
