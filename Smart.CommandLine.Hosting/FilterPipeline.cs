@@ -54,8 +54,6 @@ internal sealed class FilterPipeline
         merged.AddRange(commandDescriptors);
 
         // Stable sort by order (global filters keep priority over command filters on equal order).
-#pragma warning disable IDE0028
         return merged.OrderBy(static x => x.Order).ToArray();
-#pragma warning restore IDE0028
     }
 }

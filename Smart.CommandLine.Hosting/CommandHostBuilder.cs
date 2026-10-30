@@ -400,9 +400,7 @@ internal sealed class RootCommandBuilder : IRootCommandBuilder
         if (name is not null)
         {
             // [MEMO] False positive ?
-#pragma warning disable IDE0028
             return new RootCommand(name);
-#pragma warning restore IDE0028
         }
 
         return null;
