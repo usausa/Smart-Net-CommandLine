@@ -54,50 +54,36 @@ public sealed class CommandHostTests
         await File.WriteAllTextAsync(file, """{"Key":"Value"}""", TestContext.Current.CancellationToken);
 
         var builder = CommandHost.CreateBuilder([]);
-        builder.Configuration.AddJsonFile(file, optional: false, reloadOnChange: true);
+        using var fileProvider = new TrackingPhysicalFileProvider(dir);
+        builder.Configuration.AddJsonFile(fileProvider, "appsettings.json", optional: false, reloadOnChange: true);
 
         var host = builder.Build();
 
-        // Confirm config readable
         var config = host.Services.GetRequiredService<IConfiguration>();
         Assert.Equal("Value", config["Key"]);
 
-        // Capture the PhysicalFileProvider before dispose (forces watcher creation)
-        var fileProvider = builder.Configuration.Sources
-            .OfType<FileConfigurationSource>()
-            .Select(static s => s.FileProvider)
-            .OfType<PhysicalFileProvider>()
-            .First();
-        _ = fileProvider.Watch("*");
-
-        // Act
         await host.DisposeAsync();
 
-        // Assert: file watcher released — delete must succeed
+        Assert.True(fileProvider.Disposed);
         File.Delete(file);
         Directory.Delete(dir);
         Assert.False(Directory.Exists(dir));
-
-        // Assert: PhysicalFileProvider is disposed — Watch throws ObjectDisposedException
-        Assert.Throws<ObjectDisposedException>(() => fileProvider.Watch("*"));
     }
 
     [Fact]
     public async Task DisposeAsyncContentRootFileProviderDisposesProvider()
     {
-        // Arrange
         var builder = CommandHost.CreateBuilder([]);
-        var fileProvider = builder.Environment.ContentRootFileProvider as PhysicalFileProvider;
-        Assert.NotNull(fileProvider);
+        var originalProvider = Assert.IsType<PhysicalFileProvider>(builder.Environment.ContentRootFileProvider);
+        var fileProvider = new TrackingPhysicalFileProvider(builder.Environment.ContentRootPath);
+        builder.Environment.ContentRootFileProvider = fileProvider;
+        originalProvider.Dispose();
         _ = fileProvider.Watch("*");
 
         var host = builder.Build();
-
-        // Act
         await host.DisposeAsync();
 
-        // Assert: ContentRootFileProvider is disposed
-        Assert.Throws<ObjectDisposedException>(() => fileProvider.Watch("*"));
+        Assert.True(fileProvider.Disposed);
     }
 
     [Fact]
@@ -133,6 +119,17 @@ public sealed class CommandHostTests
         public bool Disposed { get; private set; }
 
         public void Dispose() => Disposed = true;
+    }
+
+    private sealed class TrackingPhysicalFileProvider(string root) : PhysicalFileProvider(root)
+    {
+        public bool Disposed { get; private set; }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            Disposed = disposing;
+        }
     }
 
     private sealed class TrackingConfigurationSource : IConfigurationSource
