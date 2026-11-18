@@ -98,6 +98,8 @@ public sealed class MessageCommand : ICommandHandler
 }
 ```
 
+- Option names and aliases must not conflict in a command, including the help and version options. A conflict in a command type is a build error (SCL0005), and other conflicts make `Build()` throw `InvalidOperationException`.
+
 ### Filter
 
 - Example

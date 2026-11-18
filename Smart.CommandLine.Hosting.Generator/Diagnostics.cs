@@ -40,4 +40,13 @@ internal static class Diagnostics
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
+
+    public static DiagnosticDescriptor OptionAliasDuplicated { get; } = new(
+        id: "SCL0005",
+        title: "Option name or alias is duplicated",
+        messageFormat: "Option name or alias is already used in the command, and is bound to the other option. property=[{0}], alias=[{1}]",
+        category: "Usage",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        customTags: DiagnosticTags.NotSuppressible);
 }

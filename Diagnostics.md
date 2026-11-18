@@ -6,3 +6,4 @@
 | SCL0002 | ❌ Error | Option property does not have a public setter that is not init-only (get-only, init-only or non-public setter), so it is not bound | Give the property a public `set` accessor |
 | SCL0003 | ❌ Error | `DefaultValue` cannot be converted to the property type, so it is not used | Give a value that converts to the property type |
 | SCL0004 | ⚠️ Warning | The `EnableSmartCommandLineHostingGenerator` MSBuild property value cannot be parsed, so the default (enabled) is used | Set `true` or `false` |
+| SCL0005 | ❌ Error | Option name or alias is already used by another option of the same command (including base types), so it is bound to that option | Give each option a unique name and aliases |

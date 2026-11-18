@@ -163,6 +163,9 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
             rootCommand.Subcommands.Add(command);
         }
 
+        // Validate option aliases
+        ValidateOptionAliases(rootCommand, rootCommand.Name, []);
+
         return new CommandHostImplement(args, rootCommand, serviceProvider, configuration, environment);
     }
 
@@ -224,6 +227,51 @@ internal sealed class CommandHostBuilder : ICommandHostBuilder
                 return commandContext.ExitCode;
             }
         });
+    }
+
+    private static void ValidateOptionAliases(Command command, string path, List<Option> inheritedOptions)
+    {
+        var aliases = new Dictionary<string, Option>(StringComparer.Ordinal);
+        foreach (var option in command.Options)
+        {
+            AddOptionAliases(aliases, path, option);
+        }
+
+        foreach (var option in inheritedOptions)
+        {
+            AddOptionAliases(aliases, path, option);
+        }
+
+        var recursiveOptions = new List<Option>(inheritedOptions);
+        foreach (var option in command.Options)
+        {
+            if (option.Recursive)
+            {
+                recursiveOptions.Add(option);
+            }
+        }
+
+        foreach (var subcommand in command.Subcommands)
+        {
+            ValidateOptionAliases(subcommand, $"{path} {subcommand.Name}", recursiveOptions);
+        }
+    }
+
+    private static void AddOptionAliases(Dictionary<string, Option> aliases, string path, Option option)
+    {
+        AddOptionAlias(aliases, path, option, option.Name);
+        foreach (var alias in option.Aliases)
+        {
+            AddOptionAlias(aliases, path, option, alias);
+        }
+    }
+
+    private static void AddOptionAlias(Dictionary<string, Option> aliases, string path, Option option, string alias)
+    {
+        if (!aliases.TryAdd(alias, option) && !ReferenceEquals(aliases[alias], option))
+        {
+            throw new InvalidOperationException($"Option name or alias is duplicated in the command. command=[{path}], alias=[{alias}], options=[{aliases[alias].Name}, {option.Name}]");
+        }
     }
 }
 #pragma warning restore CA1001

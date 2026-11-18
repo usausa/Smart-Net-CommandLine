@@ -281,6 +281,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
     private static EquatableArray<OptionModel> ExtractOptionModels(ITypeSymbol typeSymbol, SemanticModel semanticModel, int position, List<DiagnosticInfo> diagnostics)
     {
         var options = new List<OptionModel>();
+        var declarations = new List<(string Property, Location? Location)>();
 
         var hidden = new HashSet<string>(StringComparer.Ordinal);
 
@@ -414,6 +415,7 @@ public sealed class CommandGenerator : IIncrementalGenerator
                         defaultValue,
                         new EquatableArray<string>(completions),
                         hiddenDeclaringType));
+                    declarations.Add((property.ToDisplayString(), property.Locations.FirstOrDefault()));
 
                     propertyIndex++;
                 }
@@ -424,7 +426,42 @@ public sealed class CommandGenerator : IIncrementalGenerator
             hierarchyLevel--;
         }
 
+        ValidateOptionAliases(options, declarations, diagnostics);
+
         return new(options);
+    }
+
+    private static void ValidateOptionAliases(List<OptionModel> options, List<(string Property, Location? Location)> declarations, List<DiagnosticInfo> diagnostics)
+    {
+        var owners = new Dictionary<string, int>(StringComparer.Ordinal);
+        var indexes = Enumerable.Range(0, options.Count)
+            .OrderBy(x => options[x].Order)
+            .ThenBy(x => options[x].HierarchyLevel)
+            .ThenBy(x => options[x].PropertyIndex);
+        foreach (var index in indexes)
+        {
+            var option = options[index];
+            ValidateOptionAlias(owners, index, option.Name, declarations[index], diagnostics);
+            foreach (var alias in option.Aliases)
+            {
+                ValidateOptionAlias(owners, index, alias, declarations[index], diagnostics);
+            }
+        }
+    }
+
+    private static void ValidateOptionAlias(Dictionary<string, int> owners, int index, string alias, (string Property, Location? Location) declaration, List<DiagnosticInfo> diagnostics)
+    {
+        if (owners.TryGetValue(alias, out var owner))
+        {
+            if (owner != index)
+            {
+                diagnostics.Add(new DiagnosticInfo(Diagnostics.OptionAliasDuplicated, declaration.Location, declaration.Property, alias));
+            }
+
+            return;
+        }
+
+        owners.Add(alias, index);
     }
 
     private static string[] ExtractAliases(TypedConstant typedConstant)

@@ -1,5 +1,6 @@
 namespace Smart.CommandLine.Hosting.Generator.Tests;
 
+using System.Globalization;
 using System.Reflection;
 
 using Microsoft.CodeAnalysis;
@@ -250,6 +251,188 @@ public class OptionDeclarationTests
 
         // Assert
         Assert.Equal(["SCL0003"], problems);
+    }
+
+    [Fact]
+    public void Scl0005DuplicateNameAndAliasEmitsDiagnosticsOnLaterOption()
+    {
+        // Arrange
+        const string source =
+            """
+            using System.Threading.Tasks;
+            using Smart.CommandLine.Hosting;
+
+            namespace TestApp;
+
+            [Command("foo", "Foo command")]
+            public sealed class FooCommand : ICommandHandler
+            {
+                [Option<string>("--light", "-l")]
+                public string Light { get; set; } = string.Empty;
+
+                [Option<string>("--light", "-l")]
+                public string Key { get; set; } = string.Empty;
+
+                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+            }
+            """ + Program;
+
+        // Act
+        var result = GeneratorTestHelper.RunGenerator(source);
+
+        // Assert
+        var messages = result.GeneratorDiagnostics
+            .Where(static x => x.Id == "SCL0005")
+            .Select(static x => x.GetMessage(CultureInfo.InvariantCulture))
+            .ToList();
+        Assert.Equal(2, messages.Count);
+        Assert.Contains(messages, static x => x.EndsWith("property=[TestApp.FooCommand.Key], alias=[--light]", StringComparison.Ordinal));
+        Assert.Contains(messages, static x => x.EndsWith("property=[TestApp.FooCommand.Key], alias=[-l]", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Scl0005DuplicateAliasInBaseTypeEmitsDiagnosticOnDerivedProperty()
+    {
+        // Arrange
+        const string source =
+            """
+            using System.Threading.Tasks;
+            using Smart.CommandLine.Hosting;
+
+            namespace TestApp;
+
+            public abstract class FooCommandBase
+            {
+                [Option<int>("--port", "-p")]
+                public int Port { get; set; }
+            }
+
+            [Command("foo", "Foo command")]
+            public sealed class FooCommand : FooCommandBase, ICommandHandler
+            {
+                [Option<string>("--password", "-p")]
+                public string Password { get; set; } = string.Empty;
+
+                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+            }
+            """ + Program;
+        var line = Array.FindIndex(source.Split('\n'), static x => x.Contains("public string Password", StringComparison.Ordinal));
+
+        // Act
+        var result = GeneratorTestHelper.RunGenerator(source);
+
+        // Assert
+        var diagnostic = Assert.Single(result.GeneratorDiagnostics);
+        Assert.Equal("SCL0005", diagnostic.Id);
+        Assert.EndsWith("property=[TestApp.FooCommand.Password], alias=[-p]", diagnostic.GetMessage(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+        Assert.Equal(line, diagnostic.Location.GetLineSpan().StartLinePosition.Line);
+    }
+
+    [Fact]
+    public void Scl0005DuplicateAliasInSharedBaseTypeEmitsDiagnosticOnce()
+    {
+        // Arrange
+        const string source =
+            """
+            using System.Threading.Tasks;
+            using Smart.CommandLine.Hosting;
+
+            namespace TestApp;
+
+            public abstract class CommandBase
+            {
+                [Option<int>("--port", "-p")]
+                public int Port { get; set; }
+
+                [Option<string>("--password", "-p")]
+                public string Password { get; set; } = string.Empty;
+            }
+
+            [Command("foo", "Foo command")]
+            public sealed class FooCommand : CommandBase, ICommandHandler
+            {
+                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+            }
+
+            [Command("bar", "Bar command")]
+            public sealed class BarCommand : CommandBase, ICommandHandler
+            {
+                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+            }
+
+            public static class Program
+            {
+                public static void Main(string[] args)
+                {
+                    var builder = CommandHost.CreateBuilder(args);
+                    builder.ConfigureCommands(static commands =>
+                    {
+                        commands.AddCommand<FooCommand>();
+                        commands.AddCommand<BarCommand>();
+                    });
+                    _ = builder.Build();
+                }
+            }
+            """;
+
+        // Act
+        var result = GeneratorTestHelper.RunGenerator(source);
+
+        // Assert
+        var diagnostic = Assert.Single(result.GeneratorDiagnostics);
+        Assert.Equal("SCL0005", diagnostic.Id);
+        Assert.EndsWith("property=[TestApp.CommandBase.Password], alias=[-p]", diagnostic.GetMessage(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SameAliasInOtherCommandsEmitsNoDiagnostic()
+    {
+        // Arrange
+        const string source =
+            """
+            using System.Threading.Tasks;
+            using Smart.CommandLine.Hosting;
+
+            namespace TestApp;
+
+            [Command("foo", "Foo command")]
+            public sealed class FooCommand : ICommandHandler
+            {
+                [Option<string>("--name", "-n")]
+                public string Name { get; set; } = string.Empty;
+
+                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+            }
+
+            [Command("bar", "Bar command")]
+            public sealed class BarCommand : ICommandHandler
+            {
+                [Option<string>("--name", "-n")]
+                public string Name { get; set; } = string.Empty;
+
+                public ValueTask ExecuteAsync(CommandContext context) => ValueTask.CompletedTask;
+            }
+
+            public static class Program
+            {
+                public static void Main(string[] args)
+                {
+                    var builder = CommandHost.CreateBuilder(args);
+                    builder.ConfigureCommands(static commands =>
+                    {
+                        commands.AddCommand<FooCommand>();
+                        commands.AddCommand<BarCommand>();
+                    });
+                    _ = builder.Build();
+                }
+            }
+            """;
+
+        // Act
+        var problems = GeneratorTestHelper.GetProblemIds(source);
+
+        // Assert
+        Assert.Empty(problems);
     }
 
     [Fact]
